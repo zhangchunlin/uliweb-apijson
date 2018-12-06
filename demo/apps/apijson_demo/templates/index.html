@@ -1,0 +1,73 @@
+{{extend "layout_demo.html"}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+
+<div id="app">
+    
+    <tabs v-model:value="tab_current" type="card" :animated="false">
+        <tab-pane label="apijson get" name="tab_get"></tab-pane>
+        <tab-pane label="apijson post" name="tab_post"></tab-pane>
+        <tab-pane label="apijson put" name="tab_put"></tab-pane>
+    </tabs>
+    <Row v-if="tab_current==='tab_get'">
+            <i-col span="3"><div align="center">POST URL</div></i-col>
+            <i-col span="8"><i-input value="/apijson/get" readonly/></i-col>
+    </Row>
+    <Row v-if="tab_current==='tab_get'">
+        <i-col span="3"><div align="center">demo request data list</div></i-col>
+        <i-col span="8">
+            <i-select v-model="request_data">
+                <i-option v-for="item in request_data_list" :value="item.value" :key="item.value">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+    </Row>
+    <Row>
+        <i-col span="3"><div align="center">request data</div></i-col>
+        <i-col span="8"><i-input v-model="request_data" type="textarea" :autosize="{minRows: 3,maxRows: 15}" placeholder="request data" /></i-col>
+        <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="post_request_data" v-bind:disabled="!can_post">Post</i-button></div></i-col>
+    </Row>
+    <Row>
+        <i-col span="3"><div align="center">response data</div></i-col>
+        <i-col span="8"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
+    </Row>
+</div>
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data: {
+        request_data_list : {{=request_data_list_json}},
+        request_data : "",
+        can_post : true,
+        response_data : "",
+        tab_current : "tab_get"
+    },
+    methods: {
+        init_default: function(){
+            vm.request_data = vm.request_data_list[0].value
+        },
+        post_request_data: function(){
+            vm.can_post = false
+            $.ajax({
+                type: "POST",
+                contentType: 'application/json',
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                data: vm.request_data,
+                success: function (data) {
+                    vm.response_data = JSON.stringify(data,null,2)
+                }
+            })
+
+        }
+    },
+    watch: {
+        request_data : function(n,o){
+            vm.can_post = true
+        }
+    }
+})
+vm.init_default()
+</script>
+{{end content_main}}

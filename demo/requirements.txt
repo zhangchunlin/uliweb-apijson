@@ -1,0 +1,9 @@
+six
+SQLAlchemy
+-e git+https://github.com/limodou/uliweb3#egg=uliweb
+-e git+https://github.com/uliwebext/uliweb-ui#egg=uliweb_ui
+-e git+https://github.com/uliwebext/uliweb-layout#egg=uliweb_layout
+-e git+https://github.com/uliwebext/uliweb-menu#egg=uliweb_menu
+-e git+https://github.com/limodou/uliweb-apps#egg=uliweb_apps
+-e git+https://github.com/zhangchunlin/uliweb-comapps#egg=uliweb_comapps
+-e git+https://github.com/zhangchunlin/uliweb-apijson#egg=uliweb_apijson
