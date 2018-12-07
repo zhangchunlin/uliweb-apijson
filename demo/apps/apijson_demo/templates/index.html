@@ -49,7 +49,6 @@ var vm = new Vue({
             vm.request_data = vm.request_data_list[0].value
         },
         post_request_data: function(){
-            vm.can_post = false
             $.ajax({
                 type: "POST",
                 contentType: 'application/json',
@@ -57,6 +56,7 @@ var vm = new Vue({
                 data: vm.request_data,
                 success: function (data) {
                     vm.response_data = JSON.stringify(data,null,2)
+                    vm.can_post = false
                 }
             })
 
