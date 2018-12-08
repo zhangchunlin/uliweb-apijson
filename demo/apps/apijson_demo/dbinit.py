@@ -99,7 +99,9 @@ comment_list = [
 for d in user_list:
     if not User.get(User.c.username==d["username"]):
         print("create user '%s'"%(d["username"]))
-        User(**d).save()
+        u = User(**d)
+        u.set_password("123")
+        u.save()
 for d in privacy_list:
     user = User.get(User.c.username==d["username"])
     if user:
