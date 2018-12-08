@@ -4,7 +4,11 @@ from json import dumps
 
 @expose('/')
 def index():
-    request_data_list = [
+    if request.user:
+        user_info = "login as user '%s'"%(request.user)
+    else:
+        user_info = "not login, you can login with username 'usera/userb/userc', and password '123'"
+    request_get = [
         {
             "label":"Single record query: with id as parameter",
             "value":'''{
@@ -42,6 +46,24 @@ def index():
 }''',
         },
     ]
+
+    request_post = [
+        {
+            "label":"Add record",
+            "value":'''{
+    "Moment": {
+        "content": "new moment for test",
+        "pictureList": [
+            "http://static.oschina.net/uploads/user/48/96331_50.jpg"
+        ]
+    },
+    "tag": "Moment"
+}''',
+        },
+    ]
+
     return {
-        "request_data_list_json":dumps(request_data_list)
+        "user_info":user_info,
+        "request_get_json":dumps(request_get),
+        "request_post_json":dumps(request_post),
     }

@@ -8,3 +8,4 @@ dist
 _git
 data
 database.db
+sessions
