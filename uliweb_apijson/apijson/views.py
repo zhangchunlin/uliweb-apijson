@@ -9,6 +9,11 @@ log = logging.getLogger('apijson')
 @expose('/apijson')
 class ApiJson(object):
     def __begin__(self):
+        self.rdict = {
+            "code":200,
+            "msg":"success"
+        }
+
         try:
             self.request_data = loads(request.data)
         except Exception as e:
@@ -16,10 +21,6 @@ class ApiJson(object):
             return json({"code":400,"msg":"not json data in the request"})
     
     def get(self):
-        self.rdict = {
-            "code":200,
-            "msg":"success"
-        }
         for key in self.request_data:
             if key[-2:]=="[]":
                 rsp = self._query_array(key)
@@ -44,7 +45,7 @@ class ApiJson(object):
         if not public:
             if not request.user:
                 return json({"code":401,"msg":"'%s' not accessable for unauthorized request"%(modelname)})
-            owner_filtered,q = self._filter_owner(model,q)
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
             if owner_filtered:
                 filtered = True
             else:
@@ -157,7 +158,7 @@ class ApiJson(object):
         if not public:
             if not request.user:
                 return json({"code":401,"msg":"'%s' not accessable for unauthorized request"%(modelname)})
-            owner_filtered,q = self._filter_owner(model,q)
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
                 return json({"code":401,"msg":"'%s' not accessable because not public"%(modelname)})
 
@@ -175,7 +176,7 @@ class ApiJson(object):
         l = [_get_info(i) for i in q]
         self.rdict[key] = l
 
-    def _filter_owner(model,q):
+    def _filter_owner(self,model,model_setting,q):
         owner_filtered = False
         if hasattr(model,"owner_condition"):
             q = q.filter(model.owner_condition())
@@ -186,3 +187,6 @@ class ApiJson(object):
                 q = q.filter(getattr(model.c,user_id_field)==request.user.id)
                 owner_filtered = True
         return owner_filtered,q
+
+    def post(self):
+        return json(self.rdict)
