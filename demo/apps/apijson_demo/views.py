@@ -5,9 +5,9 @@ from json import dumps
 @expose('/')
 def index():
     if request.user:
-        user_info = "login as user '%s'"%(request.user)
+        user_info = "login as user '%s(%s)'"%(request.user.username,request.user)
     else:
-        user_info = "not login, you can login with username 'usera/userb/userc', and password '123'"
+        user_info = "not login, you can login with username 'admin/usera/userb/userc', and password '123'"
     request_get = [
         {
             "label":"Single record query: with id as parameter",
@@ -33,7 +33,7 @@ def index():
 }''',
         },
         {
-            "label":"Array query",
+            "label":"Array query: private data",
             "value":'''{
   "[]":{
     "@count":2,

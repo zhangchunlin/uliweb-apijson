@@ -11,6 +11,11 @@ Moment = models.moment
 
 user_list = [
     {
+        "username": "admin",
+        "nickname": "Administrator",
+        "email": "admin@localhost",
+    },
+    {
         "username": "usera",
         "nickname": "User A",
         "email": "usera@localhost",
@@ -101,7 +106,10 @@ for d in user_list:
         print("create user '%s'"%(d["username"]))
         u = User(**d)
         u.set_password("123")
+        if d["username"]=="admin":
+            u.is_superuser = True
         u.save()
+
 for d in privacy_list:
     user = User.get(User.c.username==d["username"])
     if user:

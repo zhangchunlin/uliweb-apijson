@@ -25,31 +25,64 @@ class ApiJson(object):
             if key[-2:]=="[]":
                 rsp = self._query_array(key)
             else:
-                rsp = self._query_one(key)
+                rsp = self._get_one(key)
             if rsp: return rsp
 
         return json(self.rdict)
 
-    def _query_one(self,key):
+    def _get_one(self,key):
         modelname = key
+        params = self.request_data[key]
+
         try:
             model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODEL.get(modelname,{})
+            model_setting = settings.APIJSON_MODELS.get(modelname,{})
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         model_column_set = None
         q = model.all()
-        public = model_setting.get("public",False)
-        filtered = False
-        if not public:
-            if not request.user:
-                return json({"code":401,"msg":"'%s' not accessable for unauthorized request"%(modelname)})
-            owner_filtered,q = self._filter_owner(model,model_setting,q)
-            if owner_filtered:
-                filtered = True
+        rbac_get = model_setting.get("rbac_get",{})
+        if not rbac_get:
+            return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
+
+        roles = rbac_get.get("roles")
+        perms = rbac_get.get("perms")
+        params_role = params.get("@role")
+        permission_check_ok = False
+        user_role = None
+        if params_role:
+            if params_role not in roles:
+                return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            if functions.has_role(request.user,params_role):
+                permission_check_ok = True
+                user_role = params_role
             else:
-                return json({"code":401,"msg":"'%s' not accessable because not public"%(modelname)})
+                return json({"code":401,"msg":"user doesn't have role '%s'"%(params_role)})
+        if not permission_check_ok and roles:
+            for role in roles:
+                if functions.has_role(request.user,role):
+                    permission_check_ok = True
+                    user_role = role
+                    break
+
+        if not permission_check_ok and perms:
+            for perm in perms:
+                if functions.has_permission(request.user,perm):
+                    permission_check_ok = True
+                    break
+
+        if not permission_check_ok:
+            return json({"code":401,"msg":"no permission"})
+
+        filtered = False
+
+        if user_role == "OWNER":
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
+            if not owner_filtered:
+                return  json({"code":401,"msg":"'%s' cannot filter with owner"%(modelname)})
+            filtered = True
+
         params = self.request_data[key]
         if isinstance(params,dict):
             for n in params:
@@ -61,14 +94,9 @@ class ApiJson(object):
                     filtered = True
                 else:
                     return json({"code":400,"msg":"'%s' have no attribute '%s'"%(modelname,n)})
-        #default filter
+        #default filter is trying to filter with owner
         if not filtered and request.user:
-            default_filter_by_self = model_setting.get("default_filter_by_self",False)
-            if default_filter_by_self:
-                user_id_field = model_setting.get("user_id_field")
-                if user_id_field:
-                    q = q.filter(getattr(model.c,user_id_field)==request.user.id)
-                    filtered = True
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
         o = q.one()
         if o:
             o = o.to_dict()
