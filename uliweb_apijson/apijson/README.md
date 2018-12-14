@@ -7,7 +7,7 @@ uliweb-apijson is a subset and slightly different variation of [apijson](https:/
 ## example
 
 ```
-[APIJSON_MODEL_CONFIG]
+[APIJSON_MODELS]
 user = {
     "user_id_field" : "id",
     "secret_fields" : ["password"],
