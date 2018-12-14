@@ -10,17 +10,17 @@ def index():
         user_info = "not login, you can login with username 'admin/usera/userb/userc', and password '123'"
     request_get = [
         {
-            "label":"Single record query: with id as parameter",
+            "label":"Single record query: no parameter",
             "value":'''{
    "user":{
-     "id":1
    }
 }''',
         },
         {
-            "label":"Single record query: no parameter",
+            "label":"Single record query: with id as parameter",
             "value":'''{
    "user":{
+     "id":1
    }
 }''',
         },
@@ -33,7 +33,7 @@ def index():
 }''',
         },
         {
-            "label":"Array query: private data",
+            "label":"Array query",
             "value":'''{
   "[]":{
     "@count":2,

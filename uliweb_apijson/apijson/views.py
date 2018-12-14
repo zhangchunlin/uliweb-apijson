@@ -23,7 +23,7 @@ class ApiJson(object):
     def get(self):
         for key in self.request_data:
             if key[-2:]=="[]":
-                rsp = self._query_array(key)
+                rsp = self._get_array(key)
             else:
                 rsp = self._get_one(key)
             if rsp: return rsp
@@ -42,6 +42,8 @@ class ApiJson(object):
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         model_column_set = None
         q = model.all()
+
+        #rbac check begin
         rbac_get = model_setting.get("rbac_get",{})
         if not rbac_get:
             return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
@@ -74,6 +76,7 @@ class ApiJson(object):
 
         if not permission_check_ok:
             return json({"code":401,"msg":"no permission"})
+        #rbac check end
 
         filtered = False
 
@@ -111,7 +114,7 @@ class ApiJson(object):
                         del o[k]
         self.rdict[key] = o
 
-    def _query_array(self,key):
+    def _get_array(self,key):
         params = self.request_data[key]
         query_count = None
         query_page = None
@@ -146,9 +149,8 @@ class ApiJson(object):
             return json({"code":400,"msg":"no model found in array query"})
 
         #model settings
-        model_setting = settings.APIJSON_MODEL.get(modelname,{})
+        model_setting = settings.APIJSON_MODELS.get(modelname,{})
         secret_fields = model_setting["secret_fields"]
-        public = model_setting.get("public",False)
         
         #model params
         #column
@@ -165,6 +167,47 @@ class ApiJson(object):
         model_order = model_param.get("@order")
 
         q = model.all()
+
+        #rbac check begin
+        rbac_get = model_setting.get("rbac_get",{})
+        if not rbac_get:
+            return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
+
+        roles = rbac_get.get("roles")
+        perms = rbac_get.get("perms")
+        params_role = params.get("@role")
+        permission_check_ok = False
+        user_role = None
+        if params_role:
+            if params_role not in roles:
+                return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            if functions.has_role(request.user,params_role):
+                permission_check_ok = True
+                user_role = params_role
+            else:
+                return json({"code":401,"msg":"user doesn't have role '%s'"%(params_role)})
+        if not permission_check_ok and roles:
+            for role in roles:
+                if functions.has_role(request.user,role):
+                    permission_check_ok = True
+                    user_role = role
+                    break
+
+        if not permission_check_ok and perms:
+            for perm in perms:
+                if functions.has_permission(request.user,perm):
+                    permission_check_ok = True
+                    break
+
+        if not permission_check_ok:
+            return json({"code":401,"msg":"no permission"})
+        #rbac check end
+
+        if user_role == "OWNER":
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
+            if not owner_filtered:
+                return  json({"code":401,"msg":"'%s' cannot filter with owner"%(modelname)})
+
         if query_count:
             if query_page:
                 q = q.offset(query_page*query_count)
@@ -182,13 +225,6 @@ class ApiJson(object):
                     sort_order = "asc"
                 column = getattr(model.c,sort_key)
                 q = q.order_by(getattr(column,sort_order)())
-
-        if not public:
-            if not request.user:
-                return json({"code":401,"msg":"'%s' not accessable for unauthorized request"%(modelname)})
-            owner_filtered,q = self._filter_owner(model,model_setting,q)
-            if not owner_filtered:
-                return json({"code":401,"msg":"'%s' not accessable because not public"%(modelname)})
 
         def _get_info(i):
             d = i.to_dict()
