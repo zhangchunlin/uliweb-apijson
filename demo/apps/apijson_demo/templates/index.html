@@ -82,7 +82,7 @@ var vm = new Vue({
                 url: vm.tab2url[vm.tab_current],
                 data: vm.request_data,
                 success: function (data) {
-                    vm.response_data = JSON.stringify(data,null,2)
+                    vm.response_data = JSON.stringify(data,null,4)
                     vm.can_post = false
                 }
             })

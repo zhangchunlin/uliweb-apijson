@@ -49,15 +49,15 @@ def index():
 
     request_post = [
         {
-            "label":"Add record",
+            "label":"Add new moment",
             "value":'''{
-    "Moment": {
+    "moment": {
         "content": "new moment for test",
-        "pictureList": [
+        "picture_list": [
             "http://static.oschina.net/uploads/user/48/96331_50.jpg"
         ]
     },
-    "tag": "Moment"
+    "@tag": "moment"
 }''',
         },
     ]

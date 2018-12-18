@@ -14,6 +14,7 @@ class Moment(Model):
     user_id = Reference("user")
     date = Field(datetime.datetime, auto_now_add=True)
     content = Field(TEXT)
+    picture_list = Field(JSON, default=[])
 
 class Comment(Model):
     user_id = Reference("user")
