@@ -253,4 +253,62 @@ class ApiJson(object):
         return owner_filtered,q
 
     def post(self):
+        tag = self.request_data.get("@tag")
+        for key in self.request_data:
+            if key[0]!="@":
+                rsp = self._post_one(key,tag)
+                if rsp:
+                    return rsp
+                else:
+                    #only accept one table
+                    return json(self.rdict)
         return json(self.rdict)
+
+    def _post_one(self,key,tag):
+        tag = tag or key
+        modelname = key
+        params = self.request_data[key]
+
+        try:
+            model = getattr(models,modelname)
+            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
+            user_id_field = model_setting.get("user_id_field")
+        except ModelNotFound as e:
+            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
+            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+        
+
+        request_setting = request_setting_tag.get(modelname,{})
+        ADD = request_setting.get("ADD")
+        permission_check_ok = False
+        if ADD:
+            _role = ADD.get("@role")
+            if _role:
+                for r in _role:
+                    if r == "OWNER":
+                        if request.user:
+                            permission_check_ok = True
+                        if user_id_field:
+                            params[user_id_field] = request.user.id
+        if not permission_check_ok:
+            return json({"code":400,"msg":"no permission"})
+
+        DISALLOW = request_setting.get("DISALLOW")
+        if DISALLOW:
+            for field in DISALLOW:
+                if field in params:
+                    log.error("request '%s' disallow '%s'"%(tag,field))
+                    return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
+
+        obj = model(**params)
+        ret = obj.save()
+        obj_dict = obj.to_dict(convert=False)
+        if ret:
+            obj_dict["code"] = 200
+            obj_dict["message"] = "success"
+        else:
+            obj_dict["code"] = 400
+            obj_dict["message"] = "fail"
+
+        self.rdict[key] = obj_dict
