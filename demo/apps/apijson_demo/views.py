@@ -33,13 +33,25 @@ def index():
 }''',
         },
         {
-            "label":"Array query",
+            "label":"Array query: user",
             "value":'''{
   "[]":{
     "@count":2,
     "@page":0,
     "user":{
       "@column":"id,username,nickname,email",
+      "@order":"id-"
+    }
+  }
+}''',
+        },
+        {
+            "label":"Array query: moment",
+            "value":'''{
+  "[]":{
+    "@count":10,
+    "@page":0,
+    "moment":{
       "@order":"id-"
     }
   }
@@ -58,6 +70,16 @@ def index():
         ]
     },
     "@tag": "moment"
+}''',
+        },
+        {
+            "label":"Add new comment",
+            "value":'''{
+    "comment": {
+        "moment_id": 1,
+        "content": "new test comment"
+    },
+    "tag": "comment"
 }''',
         },
     ]

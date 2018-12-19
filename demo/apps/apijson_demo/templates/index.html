@@ -94,6 +94,15 @@ var vm = new Vue({
     watch: {
         request_data : function(n,o){
             vm.can_post = true
+        },
+        tab_current : function(n,o){
+            if (n=="tab_get") {
+                vm.request_data = vm.request_get[0].value
+            }
+            else if (n=="tab_post") {
+                vm.request_data = vm.request_post[0].value
+            }
+            vm.response_data = ""
         }
     }
 })

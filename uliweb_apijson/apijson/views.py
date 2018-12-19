@@ -150,7 +150,7 @@ class ApiJson(object):
 
         #model settings
         model_setting = settings.APIJSON_MODELS.get(modelname,{})
-        secret_fields = model_setting["secret_fields"]
+        secret_fields = model_setting.get("secret_fields")
         
         #model params
         #column
