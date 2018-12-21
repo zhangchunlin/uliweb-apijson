@@ -84,8 +84,22 @@ def index():
         },
     ]
 
+    request_put = [
+        {
+            "label":"Modify moment",
+            "value":'''{
+    "moment": {
+        "id": 1,
+        "content": "modify moment content"
+    },
+    "tag": "moment"
+}''',
+        },
+    ]
+
     return {
         "user_info":user_info,
         "request_get_json":dumps(request_get),
         "request_post_json":dumps(request_post),
+        "request_put_json":dumps(request_put),
     }

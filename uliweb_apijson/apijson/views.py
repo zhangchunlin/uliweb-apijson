@@ -44,12 +44,12 @@ class ApiJson(object):
         q = model.all()
 
         #rbac check begin
-        rbac_get = model_setting.get("rbac_get",{})
-        if not rbac_get:
+        GET = model_setting.get("GET",{})
+        if not GET:
             return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
 
-        roles = rbac_get.get("roles")
-        perms = rbac_get.get("perms")
+        roles = GET.get("roles")
+        perms = GET.get("perms")
         params_role = params.get("@role")
         permission_check_ok = False
         user_role = None
@@ -169,12 +169,12 @@ class ApiJson(object):
         q = model.all()
 
         #rbac check begin
-        rbac_get = model_setting.get("rbac_get",{})
-        if not rbac_get:
+        GET = model_setting.get("GET",{})
+        if not GET:
             return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
 
-        roles = rbac_get.get("roles")
-        perms = rbac_get.get("perms")
+        roles = GET.get("roles")
+        perms = GET.get("perms")
         params_role = params.get("@role")
         permission_check_ok = False
         user_role = None
@@ -277,38 +277,135 @@ class ApiJson(object):
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
-        
 
-        request_setting = request_setting_tag.get(modelname,{})
-        ADD = request_setting.get("ADD")
+        request_setting_model = request_setting_tag.get(modelname,{})
+        request_setting_POST =  request_setting_model.get("POST",{})
+        ADD = request_setting_POST.get("ADD")
         permission_check_ok = False
         if ADD:
-            _role = ADD.get("@role")
-            if _role:
-                for r in _role:
+            roles = ADD.get("roles")
+            if roles:
+                for r in roles:
                     if r == "OWNER":
                         if request.user:
                             permission_check_ok = True
                         if user_id_field:
                             params[user_id_field] = request.user.id
+                        else:
+                            #need OWNER, but don't know how to set user id
+                            return json({"code":400,"msg":"no permission"})
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
-        DISALLOW = request_setting.get("DISALLOW")
+        DISALLOW = request_setting_POST.get("DISALLOW")
         if DISALLOW:
             for field in DISALLOW:
                 if field in params:
                     log.error("request '%s' disallow '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
+        NECESSARY = request_setting_POST.get("NECESSARY")
+        if NECESSARY:
+            for field in NECESSARY:
+                if field not in params:
+                    log.error("request '%s' don't have necessary field '%s'"%(tag,field))
+                    return json({"code":400,"msg":"request '%s' don't have necessary field '%s'"%(tag,field)})
+
         obj = model(**params)
         ret = obj.save()
         obj_dict = obj.to_dict(convert=False)
+        secret_fields = model_setting.get("secret_fields")
+        if secret_fields:
+            for k in secret_fields:
+                del obj_dict[k]
+
         if ret:
             obj_dict["code"] = 200
             obj_dict["message"] = "success"
         else:
             obj_dict["code"] = 400
             obj_dict["message"] = "fail"
+            self.rdict["code"] = 400
+            self.rdict["message"] = "fail"
 
+        self.rdict[key] = obj_dict
+
+    def put(self):
+        tag = self.request_data.get("@tag")
+        for key in self.request_data:
+            if key[0]!="@":
+                rsp = self._put_one(key,tag)
+                if rsp:
+                    return rsp
+                else:
+                    #only accept one table
+                    return json(self.rdict)
+
+        return json(self.rdict)
+
+    def _put_one(self,key,tag):
+        tag = tag or key
+        modelname = key
+        params = self.request_data[key]
+
+        try:
+            model = getattr(models,modelname)
+            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
+            user_id_field = model_setting.get("user_id_field")
+        except ModelNotFound as e:
+            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
+            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+        
+        request_setting_model = request_setting_tag.get(modelname,{})
+        request_setting_PUT =  request_setting_model.get("PUT",{})
+        ADD = request_setting_PUT.get("ADD")
+        permission_check_ok = False
+
+        try:
+            id_ = params.get("id")
+            if not id_:
+                return json({"code":400,"msg":"id param needed"})
+            id_ = int(id_)
+        except ValueError as e:
+            return json({"code":400,"msg":"id '%s' cannot convert to integer"%(params.get("id"))})
+        obj = model.get(id_)
+
+        if ADD:
+            roles = ADD.get("roles")
+            if roles:
+                for r in roles:
+                    if r == "OWNER":
+                        if request.user:
+                            if user_id_field:
+                                if getattr(obj,user_id_field)!=request.user.id:
+                                    permission_check_ok = True
+                        else:
+                            return json({"code":400,"msg":"need login user"})
+        if not permission_check_ok:
+            return json({"code":400,"msg":"no permission"})
+        
+        if not obj:
+            return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
+        kwargs = {}
+        for k in params:
+            if k=="id":
+                continue
+            elif hasattr(obj,k):
+                kwargs[k] = params[k]
+            else:
+                return json({"code":400,"msg":"'%s' don't have field '%s'"%(modelname,k)})
+        obj.update(**kwargs)
+        ret = obj.save()
+        obj_dict = {"id":id_}
+        if ret:
+            obj_dict["code"] = 200
+            obj_dict["message"] = "success"
+            obj_dict["count"] = 1
+        else:
+            obj_dict["code"] = 400
+            obj_dict["message"] = "fail"
+            obj_dict["count"] = 0
+            self.rdict["code"] = 400
+            self.rdict["message"] = "fail"
         self.rdict[key] = obj_dict
