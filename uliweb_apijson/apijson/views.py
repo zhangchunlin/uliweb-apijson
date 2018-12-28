@@ -268,6 +268,7 @@ class ApiJson(object):
         tag = tag or key
         modelname = key
         params = self.request_data[key]
+        params_role = params.get("@role")
 
         try:
             model = getattr(models,modelname)
@@ -283,17 +284,33 @@ class ApiJson(object):
         ADD = request_setting_POST.get("ADD")
         permission_check_ok = False
         if ADD:
-            roles = ADD.get("roles")
+            ADD_role = ADD.get("@role")
+            if ADD_role and not params_role:
+                params_role = ADD_role
+
+        POST = model_setting.get("POST")
+        if POST:
+            roles = POST.get("roles")
+            if params_role:
+                if not params_role in roles:
+                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                roles = [params_role]
+
             if roles:
-                for r in roles:
-                    if r == "OWNER":
+                for role in roles:
+                    if role == "OWNER":
                         if request.user:
                             permission_check_ok = True
-                        if user_id_field:
-                            params[user_id_field] = request.user.id
-                        else:
-                            #need OWNER, but don't know how to set user id
-                            return json({"code":400,"msg":"no permission"})
+                            if user_id_field:
+                                params[user_id_field] = request.user.id
+                            else:
+                                #need OWNER, but don't know how to set user id
+                                return json({"code":400,"msg":"no permission"})
+                            break
+                    else:
+                        if functions.has_role(request.user,role):
+                            permission_check_ok = True
+                            break
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
@@ -347,6 +364,7 @@ class ApiJson(object):
         tag = tag or key
         modelname = key
         params = self.request_data[key]
+        params_role = params.get("@role")
 
         try:
             model = getattr(models,modelname)
@@ -359,8 +377,13 @@ class ApiJson(object):
         
         request_setting_model = request_setting_tag.get(modelname,{})
         request_setting_PUT =  request_setting_model.get("PUT",{})
-        ADD = request_setting_PUT.get("ADD")
         permission_check_ok = False
+
+        ADD = request_setting_PUT.get("ADD")
+        if ADD:
+            ADD_role = ADD.get("@role")
+            if ADD_role and not params_role:
+                params_role = ADD_role
 
         try:
             id_ = params.get("id")
@@ -371,17 +394,28 @@ class ApiJson(object):
             return json({"code":400,"msg":"id '%s' cannot convert to integer"%(params.get("id"))})
         obj = model.get(id_)
 
-        if ADD:
-            roles = ADD.get("roles")
+        PUT = model_setting.get("PUT")
+        if PUT:
+            roles = PUT.get("roles")
+            if params_role:
+                if not params_role in roles:
+                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                roles = [params_role]
             if roles:
-                for r in roles:
-                    if r == "OWNER":
+                for role in roles:
+                    if role == "OWNER":
                         if request.user:
                             if user_id_field:
-                                if getattr(obj,user_id_field)!=request.user.id:
+                                if obj.to_dict().get(user_id_field)==request.user.id:
                                     permission_check_ok = True
+                                    break
                         else:
                             return json({"code":400,"msg":"need login user"})
+                    else:
+                        if functions.has_role(request.user,role):
+                            permission_check_ok = True
+                            break
+
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
         
@@ -409,3 +443,6 @@ class ApiJson(object):
             self.rdict["code"] = 400
             self.rdict["message"] = "fail"
         self.rdict[key] = obj_dict
+
+    def delete(self):
+        return json(self.rdict)
