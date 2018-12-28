@@ -254,6 +254,8 @@ class ApiJson(object):
 
     def post(self):
         tag = self.request_data.get("@tag")
+        if not tag:
+            return json({"code":400,"msg":"'tag' parameter is needed"})
         for key in self.request_data:
             if key[0]!="@":
                 rsp = self._post_one(key,tag)
@@ -265,7 +267,6 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _post_one(self,key,tag):
-        tag = tag or key
         modelname = key
         params = self.request_data[key]
         params_role = params.get("@role")
@@ -282,12 +283,12 @@ class ApiJson(object):
         request_setting_model = request_setting_tag.get(modelname,{})
         request_setting_POST =  request_setting_model.get("POST",{})
         ADD = request_setting_POST.get("ADD")
-        permission_check_ok = False
         if ADD:
             ADD_role = ADD.get("@role")
             if ADD_role and not params_role:
                 params_role = ADD_role
 
+        permission_check_ok = False
         POST = model_setting.get("POST")
         if POST:
             roles = POST.get("roles")
@@ -349,6 +350,8 @@ class ApiJson(object):
 
     def put(self):
         tag = self.request_data.get("@tag")
+        if not tag:
+            return json({"code":400,"msg":"'tag' parameter is needed"})
         for key in self.request_data:
             if key[0]!="@":
                 rsp = self._put_one(key,tag)
@@ -361,7 +364,6 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _put_one(self,key,tag):
-        tag = tag or key
         modelname = key
         params = self.request_data[key]
         params_role = params.get("@role")
@@ -377,7 +379,6 @@ class ApiJson(object):
         
         request_setting_model = request_setting_tag.get(modelname,{})
         request_setting_PUT =  request_setting_model.get("PUT",{})
-        permission_check_ok = False
 
         ADD = request_setting_PUT.get("ADD")
         if ADD:
@@ -393,7 +394,10 @@ class ApiJson(object):
         except ValueError as e:
             return json({"code":400,"msg":"id '%s' cannot convert to integer"%(params.get("id"))})
         obj = model.get(id_)
+        if not obj:
+            return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
 
+        permission_check_ok = False
         PUT = model_setting.get("PUT")
         if PUT:
             roles = PUT.get("roles")
@@ -419,8 +423,6 @@ class ApiJson(object):
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
         
-        if not obj:
-            return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
         kwargs = {}
         for k in params:
             if k=="id":
@@ -445,4 +447,95 @@ class ApiJson(object):
         self.rdict[key] = obj_dict
 
     def delete(self):
+        tag = self.request_data.get("@tag")
+        if not tag:
+            return json({"code":400,"msg":"'tag' parameter is needed"})
+        for key in self.request_data:
+            if key[0]!="@":
+                rsp = self._delete_one(key,tag)
+                if rsp:
+                    return rsp
+                else:
+                    #only accept one table
+                    return json(self.rdict)
         return json(self.rdict)
+
+    def _delete_one(self,key,tag):
+        modelname = key
+        params = self.request_data[key]
+        params_role = params.get("@role")
+
+        try:
+            model = getattr(models,modelname)
+            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
+            user_id_field = model_setting.get("user_id_field")
+        except ModelNotFound as e:
+            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
+            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+        
+        request_setting_model = request_setting_tag.get(modelname,{})
+        request_setting_DELETE =  request_setting_model.get("DELETE",{})
+
+        ADD = request_setting_DELETE.get("ADD")
+        if ADD:
+            ADD_role = ADD.get("@role")
+            if ADD_role and not params_role:
+                params_role = ADD_role
+
+        try:
+            id_ = params.get("id")
+            if not id_:
+                return json({"code":400,"msg":"id param needed"})
+            id_ = int(id_)
+        except ValueError as e:
+            return json({"code":400,"msg":"id '%s' cannot convert to integer"%(params.get("id"))})
+        obj = model.get(id_)
+        if not obj:
+            return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
+
+        permission_check_ok = False
+        DELETE = model_setting.get("DELETE")
+        if DELETE:
+            roles = DELETE.get("roles")
+            if params_role:
+                if not params_role in roles:
+                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                roles = [params_role]
+            if roles:
+                for role in roles:
+                    if role == "OWNER":
+                        if request.user:
+                            if user_id_field:
+                                if obj.to_dict().get(user_id_field)==request.user.id:
+                                    permission_check_ok = True
+                                    break
+                        else:
+                            return json({"code":400,"msg":"need login user"})
+                    else:
+                        if functions.has_role(request.user,role):
+                            permission_check_ok = True
+                            break
+
+        if not permission_check_ok:
+            return json({"code":400,"msg":"no permission"})
+
+        try:
+            obj.delete()
+            ret = True
+        except Exception as e:
+            log.error("remove %s %s fail"%(modelname,id_))
+            ret = False
+
+        obj_dict = {"id":id_}
+        if ret:
+            obj_dict["code"] = 200
+            obj_dict["message"] = "success"
+            obj_dict["count"] = 1
+        else:
+            obj_dict["code"] = 400
+            obj_dict["message"] = "fail"
+            obj_dict["count"] = 0
+            self.rdict["code"] = 400
+            self.rdict["message"] = "fail"
+        self.rdict[key] = obj_dict

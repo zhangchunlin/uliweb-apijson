@@ -9,6 +9,7 @@
         <tab-pane label="apijson get" name="tab_get"></tab-pane>
         <tab-pane label="apijson post" name="tab_post"></tab-pane>
         <tab-pane label="apijson put" name="tab_put"></tab-pane>
+        <tab-pane label="apijson delete" name="tab_delete"></tab-pane>
     </tabs>
     <Row>
         <i-col span="3"><div align="center">login user</div></i-col>
@@ -49,14 +50,27 @@
         <i-col span="3"><div align="center">PUT URL</div></i-col>
         <i-col span="8"><i-input value="/apijson/put" readonly/></i-col>
     </Row>
-<Row v-if="tab_current==='tab_put'">
-    <i-col span="3"><div align="center"><strong>apijson put</strong> request examples</div></i-col>
-    <i-col span="8">
-        <i-select v-model="request_data">
-            <i-option v-for="item in request_put" :value="item.value" :key="item.value">{ item.label }</i-option>
-        </i-select>
-    </i-col>
-</Row>
+    <Row v-if="tab_current==='tab_put'">
+        <i-col span="3"><div align="center"><strong>apijson put</strong> request examples</div></i-col>
+        <i-col span="8">
+            <i-select v-model="request_data">
+                <i-option v-for="item in request_put" :value="item.value" :key="item.value">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+    </Row>
+
+    <Row v-if="tab_current==='tab_delete'">
+        <i-col span="3"><div align="center">DELETE URL</div></i-col>
+        <i-col span="8"><i-input value="/apijson/delete" readonly/></i-col>
+    </Row>
+    <Row v-if="tab_current==='tab_delete'">
+        <i-col span="3"><div align="center"><strong>apijson delete</strong> request examples</div></i-col>
+        <i-col span="8">
+            <i-select v-model="request_data">
+                <i-option v-for="item in request_delete" :value="item.value" :key="item.value">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+    </Row>
 
     <Row>
         <i-col span="3"><div align="center">request data</div></i-col>
@@ -76,6 +90,7 @@ var vm = new Vue({
         request_get : {{=request_get_json}},
         request_post : {{=request_post_json}},
         request_put : {{=request_put_json}},
+        request_delete : {{=request_delete_json}},
         request_data : "",
         can_post : true,
         response_data : "",
@@ -83,7 +98,8 @@ var vm = new Vue({
         tab2url : {
             "tab_get":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
             "tab_post":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.post')}}",
-            "tab_put":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.put')}}"
+            "tab_put":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.put')}}",
+            "tab_delete":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.delete')}}"
         }
     },
     methods: {
@@ -119,6 +135,9 @@ var vm = new Vue({
             }
             else if (n=="tab_put") {
                 vm.request_data = vm.request_put[0].value
+            }
+            else if (n=="tab_delete") {
+                vm.request_data = vm.request_delete[0].value
             }
             vm.response_data = ""
         }
