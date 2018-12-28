@@ -79,7 +79,7 @@ def index():
         "moment_id": 1,
         "content": "new test comment"
     },
-    "tag": "comment"
+    "@tag": "comment"
 }''',
         },
     ]
@@ -92,7 +92,19 @@ def index():
         "id": 1,
         "content": "modify moment content"
     },
-    "tag": "moment"
+    "@tag": "moment"
+}''',
+        },
+    ]
+
+    request_delete = [
+        {
+            "label":"Delete moment",
+            "value":'''{
+    "moment": {
+        "id": 1
+    },
+    "@tag": "moment"
 }''',
         },
     ]
@@ -102,4 +114,5 @@ def index():
         "request_get_json":dumps(request_get),
         "request_post_json":dumps(request_post),
         "request_put_json":dumps(request_put),
+        "request_delete_json":dumps(request_delete),
     }
