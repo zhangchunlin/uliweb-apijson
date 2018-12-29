@@ -11,9 +11,10 @@ def index():
 
     request_get = [
         {
-            "label":"Single record query: no parameter",
+            "label":"Single record query: self user",
             "value":'''{
    "user":{
+       "@role":"OWNER"
    }
 }''',
         },
@@ -21,7 +22,8 @@ def index():
             "label":"Single record query: with id as parameter",
             "value":'''{
    "user":{
-     "id":1
+     "id":2,
+     "@role":"ADMIN"
    }
 }''',
         },
@@ -29,7 +31,8 @@ def index():
             "label":"Single record query: @column",
             "value":'''{
    "user":{
-     "@column": "id,username,email"
+     "@column": "id,username,email",
+     "@role":"OWNER"
    }
 }''',
         },
@@ -41,7 +44,8 @@ def index():
     "@page":0,
     "user":{
       "@column":"id,username,nickname,email",
-      "@order":"id-"
+      "@order":"id-",
+     "@role":"ADMIN"
     }
   }
 }''',
