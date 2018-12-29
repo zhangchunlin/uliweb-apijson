@@ -7,6 +7,7 @@
 <div id="app">
     <tabs v-model:value="tab_current" type="card" :animated="false">
         <tab-pane label="apijson get" name="tab_get"></tab-pane>
+        <tab-pane label="apijson head" name="tab_head"></tab-pane>
         <tab-pane label="apijson post" name="tab_post"></tab-pane>
         <tab-pane label="apijson put" name="tab_put"></tab-pane>
         <tab-pane label="apijson delete" name="tab_delete"></tab-pane>
@@ -32,6 +33,20 @@
             </i-select>
         </i-col>
     </Row>
+
+    <Row v-if="tab_current==='tab_head'">
+        <i-col span="3"><div align="center">HTTP HEAD URL</div></i-col>
+        <i-col span="8"><i-input value="/apijson/head" readonly/></i-col>
+    </Row>
+    <Row v-if="tab_current==='tab_head'">
+        <i-col span="3"><div align="center"><strong>apijson head</strong> request examples</div></i-col>
+        <i-col span="8">
+            <i-select v-model="request_data">
+                <i-option v-for="item in request_head" :value="item.value" :key="item.value">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+    </Row>
+
 
     <Row v-if="tab_current==='tab_post'">
             <i-col span="3"><div align="center">POST URL</div></i-col>
@@ -88,6 +103,7 @@ var vm = new Vue({
     delimiters: ['{', '}'],
     data: {
         request_get : {{=request_get_json}},
+        request_head : {{=request_head_json}},
         request_post : {{=request_post_json}},
         request_put : {{=request_put_json}},
         request_delete : {{=request_delete_json}},
@@ -97,6 +113,7 @@ var vm = new Vue({
         tab_current : "tab_get",
         tab2url : {
             "tab_get":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+            "tab_head":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.head')}}",
             "tab_post":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.post')}}",
             "tab_put":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.put')}}",
             "tab_delete":"{{=url_for('uliweb_apijson.apijson.views.ApiJson.delete')}}"
@@ -129,6 +146,9 @@ var vm = new Vue({
         tab_current : function(n,o){
             if (n=="tab_get") {
                 vm.request_data = vm.request_get[0].value
+            }
+            else if (n=="tab_head") {
+                vm.request_data = vm.request_head[0].value
             }
             else if (n=="tab_post") {
                 vm.request_data = vm.request_post[0].value
