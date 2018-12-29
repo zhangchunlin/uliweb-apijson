@@ -13,6 +13,7 @@ class ApiJson(object):
             "code":200,
             "msg":"success"
         }
+        self.vars = {}
 
         try:
             self.request_data = loads(request.data)
@@ -20,14 +21,25 @@ class ApiJson(object):
             log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
             return json({"code":400,"msg":"not json data in the request"})
     
+    def apply_vars(self):
+        for key in self.request_data:
+            if key[-1]=="@":
+                k = self.request_data[key]
+                v = self.vars.get(k)
+                if v:
+                    self.rdict[key[:-1]] = v
+
     def get(self):
         for key in self.request_data:
-            if key[-2:]=="[]":
+            if key[-1]=="@":
+                #vars need to be applied later
+                pass
+            elif key[-2:]=="[]":
                 rsp = self._get_array(key)
             else:
                 rsp = self._get_one(key)
             if rsp: return rsp
-
+        self.apply_vars()
         return json(self.rdict)
 
     def _get_one(self,key):
@@ -95,35 +107,40 @@ class ApiJson(object):
 
     def _get_array(self,key):
         params = self.request_data[key]
-        query_count = None
-        query_page = None
         modelname = None
         model_param = None
         model_column_set = None
-        for n in params:
-            if n[0]=="@":
-                if not query_count and n=="@count":
-                    try:
-                        query_count = int(params[n])
-                    except ValueError as e:
-                        log.error("bad param in '%s': '%s'"%(n,params))
-                        return json({"code":400,"msg":"@count should be an int, now '%s'"%(params[n])})
-                    if query_count<=0:
-                        return json({"code":400,"msg":"count should >0, now is '%s' "%(query_count)})
-                elif not query_page and n=="@page":
-                    #@page begin from 0
-                    try:
-                        query_page = int(params[n])
-                    except ValueError as e:
-                        log.error("bad param in '%s': '%s'"%(n,params))
-                        return json({"code":400,"msg":"@page should be an int, now '%s'"%(params[n])})
-                    if query_page<0:
-                        return json({"code":400,"msg":"page should >0, now is '%s' "%(query_page)})
 
-            # TODO: support join in the future, now only support 1 model
-            elif not modelname:
+        query_count = params.get("@count")
+        if query_count:
+            try:
+                query_count = int(query_count)
+            except ValueError as e:
+                log.error("bad param in '%s': '%s'"%(n,params))
+                return json({"code":400,"msg":"@count should be an int, now '%s'"%(params[n])})
+
+        query_page = params.get("@page")
+        if query_page:
+            #@page begin from 0
+            try:
+                query_page = int(params[n])
+            except ValueError as e:
+                log.error("bad param in '%s': '%s'"%(n,params))
+                return json({"code":400,"msg":"@page should be an int, now '%s'"%(params[n])})
+            if query_page<0:
+                return json({"code":400,"msg":"page should >0, now is '%s'"%(query_page)})
+
+        #https://github.com/TommyLemon/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
+        query_type = params.get("@query",0)
+        if query_type not in [0,1,2]:
+            return json({"code":400,"msg":"bad param 'query': %s"%(query_type)})
+
+        for n in params:
+            if n[0]!="@":
+                # TODO: support join in the future, now only support 1 model
                 modelname = n
-        
+                break
+
         if not modelname:
             return json({"code":400,"msg":"no model found in array query"})
 
@@ -174,37 +191,41 @@ class ApiJson(object):
             if not owner_filtered:
                 return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
 
-        if query_count:
-            if query_page:
-                q = q.offset(query_page*query_count)
-            q = q.limit(query_count)
-        if model_order:
-            for k in model_order.split(","):
-                if k[-1] == "+":
-                    sort_key = k[:-1]
-                    sort_order = "asc"
-                elif k[-1] == "-":
-                    sort_key = k[:-1]
-                    sort_order = "desc"
-                else:
-                    sort_key = k
-                    sort_order = "asc"
-                column = getattr(model.c,sort_key)
-                q = q.order_by(getattr(column,sort_order)())
+        if query_type in [1,2]:
+            self.vars["/%s/total"%(key)] = q.count()
 
-        def _get_info(i):
-            d = i.to_dict()
-            if secret_fields:
-                for k in secret_fields:
-                    del d[k]
-            if model_column_set:
-                keys = list(d.keys())
-                for k in keys:
-                    if k not in model_column_set:
+        if query_type in [0,2]:
+            if query_count:
+                if query_page:
+                    q = q.offset(query_page*query_count)
+                q = q.limit(query_count)
+            if model_order:
+                for k in model_order.split(","):
+                    if k[-1] == "+":
+                        sort_key = k[:-1]
+                        sort_order = "asc"
+                    elif k[-1] == "-":
+                        sort_key = k[:-1]
+                        sort_order = "desc"
+                    else:
+                        sort_key = k
+                        sort_order = "asc"
+                    column = getattr(model.c,sort_key)
+                    q = q.order_by(getattr(column,sort_order)())
+
+            def _get_info(i):
+                d = i.to_dict()
+                if secret_fields:
+                    for k in secret_fields:
                         del d[k]
-            return d
-        l = [_get_info(i) for i in q]
-        self.rdict[key] = l
+                if model_column_set:
+                    keys = list(d.keys())
+                    for k in keys:
+                        if k not in model_column_set:
+                            del d[k]
+                return d
+            l = [_get_info(i) for i in q]
+            self.rdict[key] = l
 
     def _filter_owner(self,model,model_setting,q):
         owner_filtered = False

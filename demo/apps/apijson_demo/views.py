@@ -14,7 +14,7 @@ def index():
             "label":"Single record query: self user",
             "value":'''{
    "user":{
-       "@role":"OWNER"
+        "@role":"OWNER"
    }
 }''',
         },
@@ -22,8 +22,8 @@ def index():
             "label":"Single record query: with id as parameter",
             "value":'''{
    "user":{
-     "id":2,
-     "@role":"ADMIN"
+        "id":2,
+        "@role":"ADMIN"
    }
 }''',
         },
@@ -31,8 +31,8 @@ def index():
             "label":"Single record query: @column",
             "value":'''{
    "user":{
-     "@column": "id,username,email",
-     "@role":"OWNER"
+       "@column": "id,username,email",
+       "@role":"OWNER"
    }
 }''',
         },
@@ -43,9 +43,9 @@ def index():
     "@count":2,
     "@page":0,
     "user":{
-      "@column":"id,username,nickname,email",
-      "@order":"id-",
-     "@role":"ADMIN"
+        "@column":"id,username,nickname,email",
+        "@order":"id-",
+        "@role":"ADMIN"
     }
   }
 }''',
@@ -53,13 +53,15 @@ def index():
         {
             "label":"Array query: moment",
             "value":'''{
-  "[]":{
-    "@count":10,
-    "@page":0,
-    "moment":{
-      "@order":"id-"
-    }
-  }
+    "moment[]":{
+        "@count":10,
+        "@page":0,
+        "@query":2,
+        "moment":{
+            "@order":"id-"
+        }
+    },
+    "total@":"/moment[]/total"
 }''',
         },
     ]
