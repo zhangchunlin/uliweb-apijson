@@ -8,11 +8,13 @@ def index():
         user_info = "login as user '%s(%s)'"%(request.user.username,request.user)
     else:
         user_info = "not login, you can login with username 'admin/usera/userb/userc', and password '123'"
+
     request_get = [
         {
-            "label":"Single record query: no parameter",
+            "label":"Single record query: self user",
             "value":'''{
    "user":{
+       "@role":"OWNER"
    }
 }''',
         },
@@ -20,7 +22,8 @@ def index():
             "label":"Single record query: with id as parameter",
             "value":'''{
    "user":{
-     "id":1
+     "id":2,
+     "@role":"ADMIN"
    }
 }''',
         },
@@ -28,7 +31,8 @@ def index():
             "label":"Single record query: @column",
             "value":'''{
    "user":{
-     "@column": "id,username,email"
+     "@column": "id,username,email",
+     "@role":"OWNER"
    }
 }''',
         },
@@ -40,7 +44,8 @@ def index():
     "@page":0,
     "user":{
       "@column":"id,username,nickname,email",
-      "@order":"id-"
+      "@order":"id-",
+     "@role":"ADMIN"
     }
   }
 }''',
@@ -55,6 +60,17 @@ def index():
       "@order":"id-"
     }
   }
+}''',
+        },
+    ]
+
+    request_head = [
+        {
+            "label":"query number of moments for one user",
+            "value":'''{
+    "moment": {
+        "user_id": 1
+    }
 }''',
         },
     ]
@@ -112,6 +128,7 @@ def index():
     return {
         "user_info":user_info,
         "request_get_json":dumps(request_get),
+        "request_head_json":dumps(request_head),
         "request_post_json":dumps(request_post),
         "request_put_json":dumps(request_put),
         "request_delete_json":dumps(request_delete),

@@ -33,6 +33,7 @@ class ApiJson(object):
     def _get_one(self,key):
         modelname = key
         params = self.request_data[key]
+        params_role = params.get("@role")
 
         try:
             model = getattr(models,modelname)
@@ -43,48 +44,30 @@ class ApiJson(object):
         model_column_set = None
         q = model.all()
 
-        #rbac check begin
-        GET = model_setting.get("GET",{})
+        GET = model_setting.get("GET")
         if not GET:
-            return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
 
         roles = GET.get("roles")
-        perms = GET.get("perms")
-        params_role = params.get("@role")
         permission_check_ok = False
-        user_role = None
-        if params_role:
-            if params_role not in roles:
-                return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
-            if functions.has_role(request.user,params_role):
-                permission_check_ok = True
-                user_role = params_role
+        if not params_role:
+            if request.user:
+                params_role = "LOGIN"
             else:
-                return json({"code":401,"msg":"user doesn't have role '%s'"%(params_role)})
-        if not permission_check_ok and roles:
-            for role in roles:
-                if functions.has_role(request.user,role):
-                    permission_check_ok = True
-                    user_role = role
-                    break
-
-        if not permission_check_ok and perms:
-            for perm in perms:
-                if functions.has_permission(request.user,perm):
-                    permission_check_ok = True
-                    break
-
+                params_role = "UNKNOWN"
+        if params_role not in roles:
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+        if functions.has_role(request.user,params_role):
+            permission_check_ok = True
+        else:
+            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
         if not permission_check_ok:
-            return json({"code":401,"msg":"no permission"})
-        #rbac check end
+            return json({"code":400,"msg":"no permission"})
 
-        filtered = False
-
-        if user_role == "OWNER":
+        if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":401,"msg":"'%s' cannot filter with owner"%(modelname)})
-            filtered = True
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
 
         params = self.request_data[key]
         if isinstance(params,dict):
@@ -94,12 +77,8 @@ class ApiJson(object):
                         model_column_set = set(params[n].split(","))
                 elif hasattr(model,n):
                     q = q.filter(getattr(model.c,n)==params[n])
-                    filtered = True
                 else:
                     return json({"code":400,"msg":"'%s' have no attribute '%s'"%(modelname,n)})
-        #default filter is trying to filter with owner
-        if not filtered and request.user:
-            owner_filtered,q = self._filter_owner(model,model_setting,q)
         o = q.one()
         if o:
             o = o.to_dict()
@@ -168,45 +147,32 @@ class ApiJson(object):
 
         q = model.all()
 
-        #rbac check begin
-        GET = model_setting.get("GET",{})
+        GET = model_setting.get("GET")
         if not GET:
-            return json({"code":401,"msg":"'%s' not accessible by apijson"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible by apijson"%(modelname)})
 
         roles = GET.get("roles")
-        perms = GET.get("perms")
-        params_role = params.get("@role")
+        params_role = model_param.get("@role")
         permission_check_ok = False
-        user_role = None
-        if params_role:
-            if params_role not in roles:
-                return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
-            if functions.has_role(request.user,params_role):
-                permission_check_ok = True
-                user_role = params_role
+        if not params_role:
+            if request.user:
+                params_role = "LOGIN"
             else:
-                return json({"code":401,"msg":"user doesn't have role '%s'"%(params_role)})
-        if not permission_check_ok and roles:
-            for role in roles:
-                if functions.has_role(request.user,role):
-                    permission_check_ok = True
-                    user_role = role
-                    break
-
-        if not permission_check_ok and perms:
-            for perm in perms:
-                if functions.has_permission(request.user,perm):
-                    permission_check_ok = True
-                    break
+                params_role = "UNKNOWN"
+        if params_role not in roles:
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+        if functions.has_role(request.user,params_role):
+            permission_check_ok = True
+        else:
+            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
 
         if not permission_check_ok:
-            return json({"code":401,"msg":"no permission"})
-        #rbac check end
+            return json({"code":400,"msg":"no permission"})
 
-        if user_role == "OWNER":
+        if params_role == "OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":401,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
 
         if query_count:
             if query_page:
@@ -252,6 +218,67 @@ class ApiJson(object):
                 owner_filtered = True
         return owner_filtered,q
 
+    def head(self):
+        for key in self.request_data:
+            rsp = self._head(key)
+            if rsp: return rsp
+        
+        return json(self.rdict)
+
+    def _head(self,key):
+        modelname = key
+        params = self.request_data[key]
+        params_role = params.get("@role")
+
+        try:
+            model = getattr(models,modelname)
+            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+        except ModelNotFound as e:
+            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
+            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+
+        q = model.all()
+
+        HEAD = model_setting.get("HEAD")
+        if not HEAD:
+            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
+        
+        roles = HEAD.get("roles")
+        permission_check_ok = False
+        if not params_role:
+            if request.user:
+                params_role = "LOGIN"
+            else:
+                params_role = "UNKNOWN"
+        if params_role not in roles:
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+        if functions.has_role(request.user,params_role):
+            permission_check_ok = True
+        else:
+            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
+        if not permission_check_ok:
+            return json({"code":400,"msg":"no permission"})
+
+        if params_role=="OWNER":
+            owner_filtered,q = self._filter_owner(model,model_setting,q)
+            if not owner_filtered:
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+        for n in params:
+            if n[0]=="@":
+                pass
+            else:
+                param = params[n]
+                if not hasattr(model.c,n):
+                    return  json({"code":400,"msg":"'%s' don't have field '%s'"%(modelname,n)})
+                q = model.filter(getattr(model.c,n)==param)
+        rdict = {
+            "code":200,
+            "msg":"success",
+            "count":q.count(),
+        }
+
+        self.rdict[key] = rdict
+
     def post(self):
         tag = self.request_data.get("@tag")
         if not tag:
@@ -274,15 +301,17 @@ class ApiJson(object):
         try:
             model = getattr(models,modelname)
             model_setting = settings.APIJSON_MODELS.get(modelname,{})
-            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
 
-        request_setting_model = request_setting_tag.get(modelname,{})
-        request_setting_POST =  request_setting_model.get("POST",{})
-        ADD = request_setting_POST.get("ADD")
+        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
+        request_tag_tag = request_tag.get(tag,{})
+        if not request_tag_tag:
+            return json({"code":400,"msg":"tag '%s' not found"%(tag)})
+        tag_POST =  request_tag_tag.get("POST",{})
+        ADD = tag_POST.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
             if ADD_role and not params_role:
@@ -294,7 +323,7 @@ class ApiJson(object):
             roles = POST.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
                 roles = [params_role]
 
             if roles:
@@ -371,16 +400,17 @@ class ApiJson(object):
         try:
             model = getattr(models,modelname)
             model_setting = settings.APIJSON_MODELS.get(modelname,{})
-            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         
-        request_setting_model = request_setting_tag.get(modelname,{})
-        request_setting_PUT =  request_setting_model.get("PUT",{})
-
-        ADD = request_setting_PUT.get("ADD")
+        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
+        request_tag_tag = request_tag.get(tag,{})
+        if not request_tag_tag:
+            return json({"code":400,"msg":"tag '%s' not found"%(tag)})
+        tag_PUT = request_tag_tag.get("PUT",{})
+        ADD = tag_PUT.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
             if ADD_role and not params_role:
@@ -403,7 +433,7 @@ class ApiJson(object):
             roles = PUT.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
                 roles = [params_role]
             if roles:
                 for role in roles:
@@ -468,16 +498,17 @@ class ApiJson(object):
         try:
             model = getattr(models,modelname)
             model_setting = settings.APIJSON_MODELS.get(modelname,{})
-            request_setting_tag = settings.APIJSON_REQUESTS.get(tag,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         
-        request_setting_model = request_setting_tag.get(modelname,{})
-        request_setting_DELETE =  request_setting_model.get("DELETE",{})
-
-        ADD = request_setting_DELETE.get("ADD")
+        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
+        request_tag_tag = request_tag.get(tag,{})
+        if not request_tag_tag:
+            return json({"code":400,"msg":"tag '%s' not found"%(tag)})
+        tag_DELETE =  request_tag_tag.get("DELETE",{})
+        ADD = tag_DELETE.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
             if ADD_role and not params_role:
@@ -500,7 +531,7 @@ class ApiJson(object):
             roles = DELETE.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":401,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
                 roles = [params_role]
             if roles:
                 for role in roles:
