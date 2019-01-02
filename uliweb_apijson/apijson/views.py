@@ -123,7 +123,7 @@ class ApiJson(object):
         if query_page:
             #@page begin from 0
             try:
-                query_page = int(params[n])
+                query_page = int(query_page)
             except ValueError as e:
                 log.error("bad param in '%s': '%s'"%(n,params))
                 return json({"code":400,"msg":"@page should be an int, now '%s'"%(params[n])})

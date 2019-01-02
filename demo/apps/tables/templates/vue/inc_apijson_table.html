@@ -1,0 +1,80 @@
+<script>
+Vue.component('apijson-table', {
+    delimiters: ['{', '}'],
+    props: ["table_name"],
+    template: `<div>
+    <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
+    <page :total="total" :page-size="query_count" :current.sync="current_page" :page-size-opts="[10, 20, 50, 100]" show-sizer @on-change="page_on_change" @on-page-size-change="page_on_page_size_change"></page>
+</div>`,
+    data: function(){
+        return {
+            tcolumns:[
+                {title:'#',key:'id'}
+            ],
+            tcolumns_init: false,
+            tlist:[],
+            query_count: 10,
+            current_page: 1,
+            total: 0,
+            sort_key: "id",
+            sort_order: "-"
+        }
+    },
+    methods: {
+        update_list: function(){
+            var thisp = this
+            var arr_params = {
+                "@count":thisp.query_count,
+                "@page":thisp.current_page-1,
+                "@query":2
+            }
+            arr_params[this.table_name] = {
+                "@order":thisp.sort_key+thisp.sort_order,
+                "@role":"{{=role}}"
+            }
+            var params = {
+                "[]":arr_params,
+                "total@":"/[]/total"
+            }
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code==200) {
+                        var arr = data["[]"]
+                        if (!thisp.tcolumns_init) {
+                            if (arr.length>0) {
+                                var item = arr[0]
+                                for (var k in item){
+                                    if (k!="id") {
+                                        thisp.tcolumns.push({title:k,key:k})
+                                    }
+                                }
+                                thisp.tcolumns_init = true
+                            }
+                        }
+                        thisp.tlist = arr
+                        thisp.total = data.total
+                    }
+                }
+            })
+        },
+        table_on_sort_change: function(){
+
+        },
+        page_on_change: function(data) {
+            this.update_list()
+        },
+        page_on_page_size_change: function(data) {
+            this.query_count = data
+            this.current_page = 0
+            this.update_list()
+        }
+    },
+    mounted: function(){
+        this.update_list()
+    }
+})
+</script>
