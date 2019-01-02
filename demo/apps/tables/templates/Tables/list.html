@@ -1,0 +1,28 @@
+{{extend "Tables/layout.html"}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_table.html"}}
+{{if role!="ADMIN":}}
+<div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_apps.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
+{{pass #if}}
+<div id="app">
+    <tabs v-model:value="tab_current" type="card">
+        <tab-pane v-for="item in tabs" :key="item" :label="item" :name="item">
+            <apijson-table :table_name="item"></apijson-table>
+        </tab-pane>
+    </tabs>
+</div>
+
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:{
+        tab_current: null,
+        tabs: {{=table_keys_json}}
+    }
+})
+</script>
+{{end content_main}}
