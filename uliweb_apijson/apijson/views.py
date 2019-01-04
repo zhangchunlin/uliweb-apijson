@@ -365,14 +365,14 @@ class ApiJson(object):
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
-        DISALLOW = request_setting_POST.get("DISALLOW")
+        DISALLOW = POST.get("DISALLOW")
         if DISALLOW:
             for field in DISALLOW:
                 if field in params:
                     log.error("request '%s' disallow '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
-        NECESSARY = request_setting_POST.get("NECESSARY")
+        NECESSARY = POST.get("NECESSARY")
         if NECESSARY:
             for field in NECESSARY:
                 if field not in params:

@@ -54,6 +54,7 @@ moment = {
 settings.APIJSON_REQUESTS.[TAG_NAME]
 
 request types currently support: POST, PUT
+
 request configuration currently support: ADD,DISALLOW,NECESSARY (still not fully support [all the configuration items](https://github.com/TommyLemon/APIJSON/wiki#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86))
 
 
