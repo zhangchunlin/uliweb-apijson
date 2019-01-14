@@ -69,7 +69,9 @@ class ApiJson(object):
                 params_role = "UNKNOWN"
         if params_role not in roles:
             return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
-        if functions.has_role(request.user,params_role):
+        if params_role == "UNKNOWN":
+            permission_check_ok = True
+        elif functions.has_role(request.user,params_role):
             permission_check_ok = True
         else:
             return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
@@ -178,7 +180,9 @@ class ApiJson(object):
                 params_role = "UNKNOWN"
         if params_role not in roles:
             return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
-        if functions.has_role(request.user,params_role):
+        if params_role == "UNKNOWN":
+            permission_check_ok = True
+        elif functions.has_role(request.user,params_role):
             permission_check_ok = True
         else:
             return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
@@ -273,7 +277,9 @@ class ApiJson(object):
                 params_role = "UNKNOWN"
         if params_role not in roles:
             return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
-        if functions.has_role(request.user,params_role):
+        if params_role == "UNKNOWN":
+            permission_check_ok = True
+        elif functions.has_role(request.user,params_role):
             permission_check_ok = True
         else:
             return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
@@ -358,6 +364,9 @@ class ApiJson(object):
                                 #need OWNER, but don't know how to set user id
                                 return json({"code":400,"msg":"no permission"})
                             break
+                    elif role == "UNKNOWN":
+                        permission_check_ok = True
+                        break
                     else:
                         if functions.has_role(request.user,role):
                             permission_check_ok = True
@@ -466,6 +475,9 @@ class ApiJson(object):
                                     break
                         else:
                             return json({"code":400,"msg":"need login user"})
+                    elif role == "UNKNOWN":
+                        permission_check_ok = True
+                        break
                     else:
                         if functions.has_role(request.user,role):
                             permission_check_ok = True
@@ -564,6 +576,9 @@ class ApiJson(object):
                                     break
                         else:
                             return json({"code":400,"msg":"need login user"})
+                    elif role == "UNKNOWN":
+                        permission_check_ok = True
+                        break
                     else:
                         if functions.has_role(request.user,role):
                             permission_check_ok = True
