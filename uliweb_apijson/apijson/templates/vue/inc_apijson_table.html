@@ -38,8 +38,19 @@ Vue.component('apijson-table', {
                 "action": {
                     title: 'Action',
                     width: 140,
-                    render: (h, params) => {
-                        return h('div', [
+                    render: function(h, params){
+                        var delete_button = h('Button', {
+                            props: {
+                                type: 'error',
+                                size: 'small'
+                            },
+                            on: {
+                                click: function(){
+                                    thisp.remove(params)
+                                }
+                            }
+                        }, 'Delete')
+                        var buttons = [
                             h('Button', {
                                 props: {
                                     type: 'primary',
@@ -53,19 +64,12 @@ Vue.component('apijson-table', {
                                         thisp.show(params)
                                     }
                                 }
-                            }, this.viewedit_label),
-                            h('Button', {
-                                props: {
-                                    type: 'error',
-                                    size: 'small'
-                                },
-                                on: {
-                                    click: function(){
-                                        thisp.remove(params)
-                                    }
-                                }
-                            }, 'Delete')
-                        ]);
+                            }, thisp.viewedit_label)
+                        ]
+                        if (thisp.config_editable) {
+                            buttons.push(delete_button)
+                        }
+                        return h('div', buttons);
                     }
                 }
             },
