@@ -1,15 +1,19 @@
 <script>
 Vue.component('apijson-table', {
     delimiters: ['{', '}'],
-    props: ["table_name"],
+    props: ["table_name","config"],
     template: `<div>
     <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
     <page :total="total" :page-size="query_count" :current.sync="current_page" :page-size-opts="[10, 20, 50, 100]" show-sizer @on-change="page_on_change" @on-page-size-change="page_on_page_size_change"></page>
-    <modal v-model="modal_view" title="View">
+    <modal v-model="modal_view" :title="viewedit_label">
         <i-form @submit.native.prevent :label-width="80">
-            <form-item v-for="item in view_items" :key="item.key" :label="item.key">
-                <i-input v-if="typeof item.value !=='boolean'" v-model="item.value" :readonly=true></i-input>
-                <checkbox v-if="typeof item.value ==='boolean'" v-model="item.value" disabled></checkbox>
+            <form-item v-for="item in viewedit_items" :key="item.key" :label="item.title">
+                <i-input v-if="item.type=='input'" v-model="item.value" :readonly="!editable(item)"></i-input>
+                <checkbox v-if="item.type=='checkbox'" v-model="item.value" :disabled="!editable(item)"></checkbox>
+                <i-input v-if="item.type=='textarea'" v-model="item.value" type="textarea" :autosize="{minRows: 2,maxRows: 5}"></i-input>
+            </form-item>
+            <form-item v-if="config_editable" label="action">
+                <i-button type="info" icon="ios-download" @click="save">Save</i-button>
             </form-item>
         </i-form>
     </modal>
@@ -21,12 +25,17 @@ Vue.component('apijson-table', {
         var thisp = this
         return {
             modal_view: false,
-            view_items: [],
+            viewedit_items: [],
+
+            edit_params: {},
+
             modal_delete: false,
-            delete_params:{},
-            tcolumns: [
-                {title:'#',key:'id',width:80},
-                {
+            delete_params: {},
+
+            tcolumns: [],
+            tcolumns_preset: {
+                "id": {title:'#',key:'id',width:80},
+                "action": {
                     title: 'Action',
                     width: 140,
                     render: (h, params) => {
@@ -44,7 +53,7 @@ Vue.component('apijson-table', {
                                         thisp.show(params)
                                     }
                                 }
-                            }, 'View'),
+                            }, this.viewedit_label),
                             h('Button', {
                                 props: {
                                     type: 'error',
@@ -59,15 +68,22 @@ Vue.component('apijson-table', {
                         ]);
                     }
                 }
-            ],
+            },
             tcolumns_init: false,
             tlist:[],
             query_count: 10,
             current_page: 1,
             total: 0,
             sort_key: "id",
-            sort_order: "-"
+            sort_order: "-",
+
+            config_editable: false,
+            config_table_fields: null,
+            config_viewedit_fields: null
         }
+    },
+    computed: {
+        viewedit_label: function(){return this.config_editable?'Edit':'View'}
     },
     methods: {
         update_list: function(){
@@ -94,21 +110,30 @@ Vue.component('apijson-table', {
                     if (data.code==200) {
                         var arr = data["[]"]
                         if (!thisp.tcolumns_init) {
-                            if (arr.length>0) {
-                                var item = arr[0]
-                                for (var k in item){
-                                    if (k!="id") {
-                                        var col = {title:k,key:k}
-                                        if (typeof item[k] ==="boolean") {
-                                            col["width"] = 80
-                                        }
-                                        else if (typeof item[k] ==="number") {
-                                            col["width"] = 100
-                                        }
-                                        thisp.tcolumns.push(col)
-                                    }
-                                }
+                            if (thisp.config_table_fields!=null){
+                                thisp.tcolumns = thisp.config_table_fields
+                                thisp.tcolumns.push(thisp.tcolumns_preset["action"])
                                 thisp.tcolumns_init = true
+                            }
+                            else {
+                                thisp.tcolumns.push(thisp.tcolumns_preset["id"])
+                                if (arr.length>0) {
+                                    var item = arr[0]
+                                    for (var k in item){
+                                        if (k!="id") {
+                                            var col = {title:k,key:k}
+                                            if (typeof item[k] ==="boolean") {
+                                                col["width"] = 80
+                                            }
+                                            else if (typeof item[k] ==="number") {
+                                                col["width"] = 100
+                                            }
+                                            thisp.tcolumns.push(col)
+                                        }
+                                    }
+                                    thisp.tcolumns.push(thisp.tcolumns_preset["action"])
+                                    thisp.tcolumns_init = true
+                                }
                             }
                         }
                         thisp.tlist = arr
@@ -119,19 +144,81 @@ Vue.component('apijson-table', {
         },
         show: function(params){
             var row = params.row
-            this.view_items = []
-            this.view_items.push({key:"id",value:row.id})
-            for (var k in row){
-                if (k!="id" && k[0]!="_") {
-                    value = row[k]
-                    this.view_items.push({key:k,value:value})
+            this.viewedit_items = []
+            if (this.config_viewedit_fields!=null) {
+                for (var i in this.config_viewedit_fields) {
+                    var d = this.config_viewedit_fields[i]
+                    d.value = row[d.key]
+                    d.type = d.type || "input"
+                    this.viewedit_items.push(d)
                 }
             }
+            else {
+                this.viewedit_items.push({title:"id",value:row.id,"type":"input"})
+                var type2type = {
+                    "boolean":"checkbox"
+                }
+                for (var k in row){
+                    if (k!="id" && k[0]!="_") {
+                        var value = row[k]
+                        var type = type2type[typeof value] || "input"
+                        this.viewedit_items.push({title:k,value:value,type:type})
+                    }
+                }
+            }
+            if (this.config_editable){
+                this.edit_params = params
+            }
+            else {
+                this.edit_params = null
+            }
             this.modal_view = true
+        },
+        editable: function(item){
+            var editable = true
+            if (item.editable!=null) {editable=item.editable}
+            return this.config_editable && editable && (item.key!="id")
         },
         remove: function(params){
             this.delete_params = params
             this.modal_delete = true
+        },
+        save: function(){
+            var thisp = this
+            var params = {
+                "@tag": thisp.table_name
+            }
+            var record_params = {}
+            var row = thisp.edit_params.row
+
+            for (var k in thisp.viewedit_items) {
+                var d = thisp.viewedit_items[k]
+                if (d.key=="id"|| d.value!=row[d.key]) {
+                    record_params[d.key] = d.value
+                }
+            }
+            params[thisp.table_name] = record_params
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.put')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code==200){
+                        thisp.$Notice.success({
+                            title: 'success update #'+row.id+' in table '+thisp.table_name,
+                            desc: data.msg
+                        })
+                        thisp.update_list()
+                    }
+                    else {
+                        thisp.$Notice.error({
+                            title: 'error when update #'+row.id+' in table '+thisp.table_name,
+                            desc: data.msg
+                        })
+                    }
+                }
+            })
         },
         real_remove: function(){
             var thisp = this
@@ -183,6 +270,11 @@ Vue.component('apijson-table', {
         }
     },
     mounted: function(){
+        if (this.config!=null){
+            this.config_editable = this.config.editable || false
+            this.config_table_fields = this.config.table_fields || null
+            this.config_viewedit_fields = this.config.viewedit_fields || null
+        }
         this.update_list()
     }
 })

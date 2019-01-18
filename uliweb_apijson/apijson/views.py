@@ -499,14 +499,14 @@ class ApiJson(object):
         obj_dict = {"id":id_}
         if ret:
             obj_dict["code"] = 200
-            obj_dict["message"] = "success"
+            obj_dict["msg"] = "success"
             obj_dict["count"] = 1
         else:
             obj_dict["code"] = 400
-            obj_dict["message"] = "fail"
+            obj_dict["msg"] = "failed when updating, maybe no change"
             obj_dict["count"] = 0
             self.rdict["code"] = 400
-            self.rdict["message"] = "fail"
+            self.rdict["msg"] = "failed when updating, maybe no change"
         self.rdict[key] = obj_dict
 
     def delete(self):
