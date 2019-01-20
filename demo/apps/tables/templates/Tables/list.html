@@ -10,7 +10,7 @@
 <div id="app">
     <tabs v-model:value="tab_current" type="card">
         <tab-pane v-for="item in tabs" :key="item" :label="item" :name="item">
-            <apijson-table :table_name="item"></apijson-table>
+            <apijson-table :table_name="item" :config="apijson_tables[item]"></apijson-table>
         </tab-pane>
     </tabs>
 </div>
@@ -21,7 +21,8 @@ var vm = new Vue({
     delimiters: ['{', '}'],
     data:{
         tab_current: null,
-        tabs: {{=table_keys_json}}
+        tabs: {{=table_keys_json}},
+        apijson_tables: {{=apijson_tables_json}}
     }
 })
 </script>
