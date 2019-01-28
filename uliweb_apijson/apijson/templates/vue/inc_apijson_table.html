@@ -256,6 +256,9 @@ Vue.component('apijson-table', {
             params[thisp.table_name] = {
                 "id": thisp.delete_params.row.id
             }
+            if (thisp.func_change_params!=null) {
+                params = thisp.func_change_params("apijson_delete",params)
+            }
             $.ajax({
                 type: "POST",
                 url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.delete')}}",
