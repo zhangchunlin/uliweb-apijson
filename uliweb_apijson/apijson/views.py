@@ -338,10 +338,11 @@ class ApiJson(object):
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
 
         request_tag = settings.APIJSON_REQUESTS.get(tag,{})
-        request_tag_tag = request_tag.get(tag,{})
-        if not request_tag_tag:
+        _model_name = request_tag.get("@model_name") or tag
+        request_tag_config = request_tag.get(_model_name,{})
+        if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_POST =  request_tag_tag.get("POST",{})
+        tag_POST =  request_tag_config.get("POST",{})
         ADD = tag_POST.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -441,10 +442,11 @@ class ApiJson(object):
         
         APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
         request_tag = APIJSON_REQUESTS.get(tag,{})
-        request_tag_tag = request_tag.get(tag,{})
-        if not request_tag_tag:
+        _model_name = request_tag.get("@model_name") or tag
+        request_tag_config = request_tag.get(_model_name,{})
+        if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_PUT = request_tag_tag.get("PUT",{})
+        tag_PUT = request_tag_config.get("PUT",{})
         ADD = tag_PUT.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -542,10 +544,11 @@ class ApiJson(object):
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         
         request_tag = settings.APIJSON_REQUESTS.get(tag,{})
-        request_tag_tag = request_tag.get(tag,{})
-        if not request_tag_tag:
+        _model_name = request_tag.get("@model_name") or tag
+        request_tag_config = request_tag.get(_model_name,{})
+        if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_DELETE =  request_tag_tag.get("DELETE",{})
+        tag_DELETE =  request_tag_config.get("DELETE",{})
         ADD = tag_DELETE.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
