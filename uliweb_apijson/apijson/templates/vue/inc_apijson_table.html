@@ -1,7 +1,7 @@
 <script>
 Vue.component('apijson-table', {
     delimiters: ['{', '}'],
-    props: ["table_name","config","func_change_params"],
+    props: ["table_name","config","func_init","func_change_params"],
     template: `<div>
     <div v-if="config_editable && config_add_fields!=null"><i-button type="primary" @click="add">Add</i-button> <br><br> </div>
     <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
@@ -353,6 +353,9 @@ Vue.component('apijson-table', {
             if (this.config.add_fields!=null) {
                 this.add_items = this.config_add_fields
             }
+        }
+        if (this.func_init!=null) {
+            this.func_init(this)
         }
         this.update_list()
     }
