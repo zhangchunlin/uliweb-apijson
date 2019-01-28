@@ -439,7 +439,8 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
         
-        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
+        APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
+        request_tag = APIJSON_REQUESTS.get(tag,{})
         request_tag_tag = request_tag.get(tag,{})
         if not request_tag_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
