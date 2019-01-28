@@ -195,6 +195,10 @@ class ApiJson(object):
             if not owner_filtered:
                 return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
 
+        for n in model_param:
+            if n[0]!="@" and hasattr(model,n):
+                q = q.filter(getattr(model.c,n)==model_param[n])
+
         if query_type in [1,2]:
             self.vars["/%s/total"%(key)] = q.count()
 

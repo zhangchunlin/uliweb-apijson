@@ -2,13 +2,19 @@
 
 def get_apijson_tables(role="UNKNOWN"):
     from uliweb import settings
-    apijson_tables = dict(settings.APIJSON_TABLES.iteritems())
+
+    s = settings.APIJSON_TABLES
+    if s:
+        apijson_tables = dict(s.iteritems())
+    else:
+        return {}
     for n in apijson_tables:
         c = apijson_tables[n]
         editable = c["editable"]
+        model_name = c.get("model_name") or n
         if editable=="auto":
             editable = False
-            POST = settings.APIJSON_MODELS[n]["POST"]
+            POST = settings.APIJSON_MODELS[model_name]["POST"]
             if POST:
                 roles = POST["roles"]
                 if roles:
