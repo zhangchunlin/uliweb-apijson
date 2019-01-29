@@ -1,15 +1,20 @@
 <script>
 Vue.component('apijson-table', {
     delimiters: ['{', '}'],
-    props: ["table_name","config"],
+    props: ["table_name","config","func_init","func_change_params"],
     template: `<div>
     <div v-if="config_editable && config_add_fields!=null"><i-button type="primary" @click="add">Add</i-button> <br><br> </div>
     <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
     <page :total="total" :page-size="query_count" :current.sync="current_page" :page-size-opts="[10, 20, 50, 100]" show-sizer @on-change="page_on_change" @on-page-size-change="page_on_page_size_change"></page>
-    <modal v-model="modal_add" title="Add" @on-ok="real_add">
+    <modal v-model="modal_add" title="Add">
         <i-form @submit.native.prevent :label-width="80">
             <form-item v-for="item in add_items" :key="item.key" :label="item.title">
+                <i-input v-if="item.type=='input'" v-model="item.value"></i-input>
+                <checkbox v-if="item.type=='checkbox'" v-model="item.value"></checkbox>
                 <i-input v-if="item.type=='textarea'" v-model="item.value" type="textarea" :autosize="{minRows: 2,maxRows: 5}"></i-input>
+            </form-item>
+            <form-item v-if="config_editable" label="action">
+                <i-button type="info" icon="plus" @click="real_add">Add</i-button>
             </form-item>
         </i-form>
     </modal>
@@ -117,6 +122,9 @@ Vue.component('apijson-table', {
                 "[]":arr_params,
                 "total@":"/[]/total"
             }
+            if (thisp.func_change_params!=null) {
+                params = thisp.func_change_params("apijson_get",params)
+            }
             $.ajax({
                 type: "POST",
                 url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
@@ -214,6 +222,9 @@ Vue.component('apijson-table', {
                 }
             }
             params[thisp.table_name] = record_params
+            if (thisp.func_change_params!=null) {
+                params = thisp.func_change_params("apijson_put",params)
+            }
             $.ajax({
                 type: "POST",
                 url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.put')}}",
@@ -225,6 +236,7 @@ Vue.component('apijson-table', {
                             title: 'success update #'+row.id+' in table '+thisp.table_name,
                             desc: data.msg
                         })
+                        thisp.modal_view = false
                         thisp.update_list()
                     }
                     else {
@@ -243,6 +255,9 @@ Vue.component('apijson-table', {
             }
             params[thisp.table_name] = {
                 "id": thisp.delete_params.row.id
+            }
+            if (thisp.func_change_params!=null) {
+                params = thisp.func_change_params("apijson_delete",params)
             }
             $.ajax({
                 type: "POST",
@@ -291,7 +306,9 @@ Vue.component('apijson-table', {
                 post_params[d.key] = d.value
             }
             params[this.table_name] = post_params
-            
+            if (thisp.func_change_params!=null) {
+                params = thisp.func_change_params("apijson_post",params)
+            }
             $.ajax({
                 type: "POST",
                 url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.post')}}",
@@ -311,6 +328,7 @@ Vue.component('apijson-table', {
                         desc: result.msg
                     })
                     thisp.update_list()
+                    thisp.modal_add = false
                 }
             })
         },
@@ -335,6 +353,9 @@ Vue.component('apijson-table', {
             if (this.config.add_fields!=null) {
                 this.add_items = this.config_add_fields
             }
+        }
+        if (this.func_init!=null) {
+            this.func_init(this)
         }
         this.update_list()
     }
