@@ -10,11 +10,11 @@ def get_apijson_tables(role="UNKNOWN"):
         return {}
     for n in apijson_tables:
         c = apijson_tables[n]
-        editable = c["editable"]
+        editable = c.get("editable",False)
         _model_name = c.get("@model_name") or n
         if editable=="auto":
             editable = False
-            POST = settings.APIJSON_MODELS[_model_name]["POST"]
+            POST = settings.APIJSON_MODELS.get(_model_name,{}).get("POST")
             if POST:
                 roles = POST["roles"]
                 if roles:
