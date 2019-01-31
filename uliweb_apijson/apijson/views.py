@@ -196,8 +196,18 @@ class ApiJson(object):
                 return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
 
         for n in model_param:
-            if n[0]!="@" and hasattr(model,n):
-                q = q.filter(getattr(model.c,n)==model_param[n])
+            if n[0]!="@":
+                if n[-1]=="$":
+                    name = n[:-1]
+                    if hasattr(model,name):
+                        q = q.filter(getattr(model.c,name).like(model_param[n]))
+                elif n[-1]=="}" and n[-2]=="{":
+                    name = n[:-2]
+                    if hasattr(model,name):
+                        # TODO
+                        pass
+                elif hasattr(model,n):
+                    q = q.filter(getattr(model.c,n)==model_param[n])
 
         if query_type in [1,2]:
             self.vars["/%s/total"%(key)] = q.count()
