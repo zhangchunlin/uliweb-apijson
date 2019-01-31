@@ -357,6 +357,9 @@ Vue.component('apijson-table', {
             if (this.config.add_fields!=null) {
                 this.add_items = this.config_add_fields
             }
+            if (this.config.page_size!=null) {
+                this.query_count = this.config.page_size
+            }
         }
         if (this.func_init!=null) {
             this.func_init(this)
