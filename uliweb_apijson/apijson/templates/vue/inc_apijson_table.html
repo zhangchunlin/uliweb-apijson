@@ -4,6 +4,7 @@ Vue.component('apijson-table', {
     props: ["table_name","config","func_init","func_change_params"],
     template: `<div>
     <div v-if="config_editable && config_add_fields!=null"><i-button type="primary" @click="add">Add</i-button> <br><br> </div>
+    <Spin size="large" fix v-if="loading"></Spin>
     <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
     <page :total="total" :page-size="query_count" :current.sync="current_page" :page-size-opts="[10, 20, 50, 100]" show-sizer @on-change="page_on_change" @on-page-size-change="page_on_page_size_change"></page>
     <modal v-model="modal_add" title="Add">
@@ -37,6 +38,7 @@ Vue.component('apijson-table', {
     data: function(){
         var thisp = this
         return {
+            loading: false,
             modal_view: false,
             viewedit_items: [],
 
@@ -125,12 +127,14 @@ Vue.component('apijson-table', {
             if (thisp.func_change_params!=null) {
                 params = thisp.func_change_params("apijson_get",params)
             }
+            thisp.loading = true
             $.ajax({
                 type: "POST",
                 url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
                 contentType: 'application/json',
                 data: JSON.stringify(params),
                 success: function (data) {
+                    thisp.loading = false
                     if (data.code==200) {
                         var arr = data["[]"]
                         if (!thisp.tcolumns_init) {
@@ -340,7 +344,7 @@ Vue.component('apijson-table', {
         },
         page_on_page_size_change: function(data) {
             this.query_count = data
-            this.current_page = 0
+            this.current_page = 1
             this.update_list()
         }
     },
@@ -352,6 +356,9 @@ Vue.component('apijson-table', {
             this.config_add_fields = this.config.add_fields || null
             if (this.config.add_fields!=null) {
                 this.add_items = this.config_add_fields
+            }
+            if (this.config.default_page_size!=null) {
+                this.query_count = this.config.default_page_size
             }
         }
         if (this.func_init!=null) {

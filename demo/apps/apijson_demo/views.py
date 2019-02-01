@@ -64,6 +64,21 @@ def index():
     "total@":"/moment[]/total"
 }''',
         },
+        {
+            "label":"Array query: like",
+            "value":'''{
+  "[]":{
+    "@count":4,
+    "@page":0,
+    "user":{
+        "@column":"id,username,nickname,email",
+        "@order":"id-",
+        "@role":"ADMIN",
+        "username$":"%user%"
+    }
+  }
+}''',
+        },
     ]
 
     request_head = [
