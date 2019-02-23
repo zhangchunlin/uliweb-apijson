@@ -1,6 +1,6 @@
 six
 SQLAlchemy
--e git+https://github.com/limodou/uliweb3#egg=uliweb
+-e git+https://github.com/limodou/uliweb3#egg=uliweb3
 -e git+https://github.com/uliwebext/uliweb-ui#egg=uliweb_ui
 -e git+https://github.com/uliwebext/uliweb-layout#egg=uliweb_layout
 -e git+https://github.com/uliwebext/uliweb-menu#egg=uliweb_menu

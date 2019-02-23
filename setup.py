@@ -44,7 +44,6 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'uliweb',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
