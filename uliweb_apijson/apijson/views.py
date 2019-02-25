@@ -30,16 +30,22 @@ class ApiJson(object):
                     self.rdict[key[:-1]] = v
 
     def get(self):
-        for key in self.request_data:
-            if key[-1]=="@":
-                #vars need to be applied later
-                pass
-            elif key[-2:]=="[]":
-                rsp = self._get_array(key)
-            else:
-                rsp = self._get_one(key)
-            if rsp: return rsp
-        self.apply_vars()
+        try:
+            for key in self.request_data:
+                if key[-1]=="@":
+                    #vars need to be applied later
+                    pass
+                elif key[-2:]=="[]":
+                    rsp = self._get_array(key)
+                else:
+                    rsp = self._get_one(key)
+                if rsp: return rsp
+            self.apply_vars()
+        except Exception as e:
+            err = "exception when handling 'apijson get': %s"%(e)
+            log.error(err)
+            traceback.print_exc()
+            return json({"code":400,"msg":err})
         return json(self.rdict)
 
     def _get_one(self,key):
@@ -258,9 +264,15 @@ class ApiJson(object):
         return owner_filtered,q
 
     def head(self):
-        for key in self.request_data:
-            rsp = self._head(key)
-            if rsp: return rsp
+        try:
+            for key in self.request_data:
+                rsp = self._head(key)
+                if rsp: return rsp
+        except Exception as e:
+            err = "exception when handling 'apijson head': %s"%(e)
+            log.error(err)
+            traceback.print_exc()
+            return json({"code":400,"msg":err})
         
         return json(self.rdict)
 
@@ -321,17 +333,24 @@ class ApiJson(object):
         self.rdict[key] = rdict
 
     def post(self):
-        tag = self.request_data.get("@tag")
-        if not tag:
-            return json({"code":400,"msg":"'tag' parameter is needed"})
-        for key in self.request_data:
-            if key[0]!="@":
-                rsp = self._post_one(key,tag)
-                if rsp:
-                    return rsp
-                else:
-                    #only accept one table
-                    return json(self.rdict)
+        try:
+            tag = self.request_data.get("@tag")
+            if not tag:
+                return json({"code":400,"msg":"'tag' parameter is needed"})
+            for key in self.request_data:
+                if key[0]!="@":
+                    rsp = self._post_one(key,tag)
+                    if rsp:
+                        return rsp
+                    else:
+                        #only accept one table
+                        return json(self.rdict)
+        except Exception as e:
+            err = "exception when handling 'apijson post': %s"%(e)
+            log.error(err)
+            traceback.print_exc()
+            return json({"code":400,"msg":err})
+
         return json(self.rdict)
 
     def _post_one(self,key,tag):
@@ -423,17 +442,23 @@ class ApiJson(object):
         self.rdict[key] = obj_dict
 
     def put(self):
-        tag = self.request_data.get("@tag")
-        if not tag:
-            return json({"code":400,"msg":"'tag' parameter is needed"})
-        for key in self.request_data:
-            if key[0]!="@":
-                rsp = self._put_one(key,tag)
-                if rsp:
-                    return rsp
-                else:
-                    #only accept one table
-                    return json(self.rdict)
+        try:
+            tag = self.request_data.get("@tag")
+            if not tag:
+                return json({"code":400,"msg":"'tag' parameter is needed"})
+            for key in self.request_data:
+                if key[0]!="@":
+                    rsp = self._put_one(key,tag)
+                    if rsp:
+                        return rsp
+                    else:
+                        #only accept one table
+                        return json(self.rdict)
+        except Exception as e:
+            err = "exception when handling 'apijson put': %s"%(e)
+            log.error(err)
+            traceback.print_exc()
+            return json({"code":400,"msg":err})
 
         return json(self.rdict)
 
@@ -527,17 +552,23 @@ class ApiJson(object):
         self.rdict[key] = obj_dict
 
     def delete(self):
-        tag = self.request_data.get("@tag")
-        if not tag:
-            return json({"code":400,"msg":"'tag' parameter is needed"})
-        for key in self.request_data:
-            if key[0]!="@":
-                rsp = self._delete_one(key,tag)
-                if rsp:
-                    return rsp
-                else:
-                    #only accept one table
-                    return json(self.rdict)
+        try:
+            tag = self.request_data.get("@tag")
+            if not tag:
+                return json({"code":400,"msg":"'tag' parameter is needed"})
+            for key in self.request_data:
+                if key[0]!="@":
+                    rsp = self._delete_one(key,tag)
+                    if rsp:
+                        return rsp
+                    else:
+                        #only accept one table
+                        return json(self.rdict)
+        except Exception as e:
+            err = "exception when handling 'apijson delete': %s"%(e)
+            log.error(err)
+            traceback.print_exc()
+            return json({"code":400,"msg":err})
         return json(self.rdict)
 
     def _delete_one(self,key,tag):
