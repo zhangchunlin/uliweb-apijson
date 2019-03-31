@@ -4,7 +4,7 @@ __doc__ = """uliweb-apijson"""
 import re
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def fpath(name):
     return os.path.join(os.path.dirname(__file__), name)
@@ -29,7 +29,6 @@ def grep(attrname):
     pattern = r"{0}\s*=\s*'([^']*)'".format(attrname)
     strval, = re.findall(pattern, file_text)
     return strval
-
 setup(
     name='uliweb-apijson',
     version=grep('__version__'),
@@ -39,8 +38,10 @@ setup(
     author_email=grep('__email__'),
     description='uliweb-apijson',
     long_description=desc(),
-    packages = ['uliweb_apijson'],
-    include_package_data=True,
+    packages = find_packages(),
+    package_data={
+        '':["*.md","*.ini","static/*","templates/*","templates/*/*"]
+    },
     zip_safe=False,
     platforms='any',
     install_requires=[
