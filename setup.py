@@ -39,9 +39,7 @@ setup(
     description='uliweb-apijson',
     long_description=desc(),
     packages = find_packages(),
-    package_data={
-        '':["*.md","*.ini","static/*","templates/*","templates/*/*"]
-    },
+    include_package_data=True,
     zip_safe=False,
     platforms='any',
     install_requires=[
