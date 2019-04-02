@@ -3,7 +3,6 @@
 pip install dependent packages, in demo root directory run:
 
 ```
-pip install six
 pip install -r requirements.txt
 ```
 
