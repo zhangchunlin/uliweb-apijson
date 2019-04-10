@@ -110,8 +110,7 @@ APIJSON是一种为API而生的JSON网络传输协议。<br />
 [前后端10大痛点解析](https://github.com/TommyLemon/APIJSON/wiki)
 
 ### 快速上手
-
-[Demo](https://github.com/zhangchunlin/uliweb-apijson/blob/master/uliweb_apijson/apijson/README.md)
+[Demo](https://github.com/zhangchunlin/uliweb-apijson/blob/master/demo/README.md)  
 [文档](https://github.com/zhangchunlin/uliweb-apijson/blob/master/uliweb_apijson/apijson/README.md)
 
 ### 下载客户端App
@@ -122,9 +121,6 @@ APIJSON是一种为API而生的JSON网络传输协议。<br />
 测试及自动生成代码工具<br />
 [APIJSONTest.apk](http://files.cnblogs.com/files/tommylemon/APIJSONTest.apk)
 
-
-### 我要赞赏
-如果你喜欢 APIJSON，感觉 APIJSON 帮助到了你，可以点右上角 ⭐Star 支持一下，谢谢 ^_^ 
 
 ### 技术交流
 如果有什么问题或建议可以 [提ISSUE](https://github.com/TommyLemon/APIJSON/issues) 或 加群，交流技术，分享经验。<br >
@@ -174,3 +170,6 @@ https://github.com/zhangchunlin/uliweb-apijson/commits/master
 
 ### 码云主页
 https://gitee.com/zhangchunlin/uliweb-apijson
+
+### 我要赞赏
+如果你喜欢 uliweb-apijson，感觉它帮助到了你，可以点右上角 ⭐Star 支持一下，谢谢 ^_^ 
