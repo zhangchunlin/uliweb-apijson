@@ -1,4 +1,4 @@
-这是 APIJSON 的 Python 版后端实现，基于 UliWeb 框架。
+这是 APIJSON 的 Python 版后端实现，基于 uliweb 框架。
 
 <h1 align="center" style="text-align:center;">
   APIJSON
