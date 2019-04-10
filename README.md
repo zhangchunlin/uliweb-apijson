@@ -110,7 +110,7 @@ APIJSON是一种为API而生的JSON网络传输协议。<br />
 [前后端10大痛点解析](https://github.com/TommyLemon/APIJSON/wiki)
 
 ### 快速上手
-[Demo](https://github.com/zhangchunlin/uliweb-apijson/blob/master/demo/README.md)  
+[Demo](https://github.com/zhangchunlin/uliweb-apijson/blob/master/demo/README.md) <br />
 [文档](https://github.com/zhangchunlin/uliweb-apijson/blob/master/uliweb_apijson/apijson/README.md)
 
 ### 下载客户端App
