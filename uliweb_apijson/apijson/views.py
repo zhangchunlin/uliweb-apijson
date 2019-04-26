@@ -3,6 +3,7 @@ from uliweb import expose, functions, models
 from uliweb.orm import ModelNotFound
 from json import loads
 import logging
+import traceback
 
 log = logging.getLogger('apijson')
 
@@ -20,7 +21,7 @@ class ApiJson(object):
         except Exception as e:
             log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
             return json({"code":400,"msg":"not json data in the request"})
-    
+
     def apply_vars(self):
         for key in self.request_data:
             if key[-1]=="@":
@@ -155,7 +156,7 @@ class ApiJson(object):
         #model settings
         model_setting = settings.APIJSON_MODELS.get(modelname,{})
         secret_fields = model_setting.get("secret_fields")
-        
+
         #model params
         #column
         model_param = params[n]
@@ -273,7 +274,7 @@ class ApiJson(object):
             log.error(err)
             traceback.print_exc()
             return json({"code":400,"msg":err})
-        
+
         return json(self.rdict)
 
     def _head(self,key):
@@ -293,7 +294,7 @@ class ApiJson(object):
         HEAD = model_setting.get("HEAD")
         if not HEAD:
             return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
-        
+
         roles = HEAD.get("roles")
         permission_check_ok = False
         if not params_role:
@@ -474,7 +475,7 @@ class ApiJson(object):
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
-        
+
         APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
         request_tag = APIJSON_REQUESTS.get(tag,{})
         _model_name = request_tag.get("@model_name") or tag
@@ -527,7 +528,7 @@ class ApiJson(object):
 
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
-        
+
         kwargs = {}
         for k in params:
             if k=="id":
@@ -583,7 +584,7 @@ class ApiJson(object):
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
-        
+
         request_tag = settings.APIJSON_REQUESTS.get(tag,{})
         _model_name = request_tag.get("@model_name") or tag
         request_tag_config = request_tag.get(_model_name,{})
