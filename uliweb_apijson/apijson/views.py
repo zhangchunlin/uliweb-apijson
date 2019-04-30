@@ -380,9 +380,9 @@ class ApiJson(object):
                 params_role = ADD_role
 
         permission_check_ok = False
-        POST = model_setting.get("POST")
-        if POST:
-            roles = POST.get("roles")
+        model_POST = model_setting.get("POST")
+        if model_POST:
+            roles = model_POST.get("roles")
             if params_role:
                 if not params_role in roles:
                     return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
@@ -409,17 +409,17 @@ class ApiJson(object):
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
-        DISALLOW = POST.get("DISALLOW")
+        DISALLOW = tag_POST.get("DISALLOW")
         if DISALLOW:
             for field in DISALLOW:
                 if field in params:
                     log.error("request '%s' disallow '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
-        NECESSARY = POST.get("NECESSARY")
+        NECESSARY = tag_POST.get("NECESSARY")
         if NECESSARY:
             for field in NECESSARY:
-                if field not in params:
+                if field not in params or params.get(field)==None:
                     log.error("request '%s' don't have necessary field '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' don't have necessary field '%s'"%(tag,field)})
 
