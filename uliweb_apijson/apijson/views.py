@@ -373,6 +373,8 @@ class ApiJson(object):
         if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
         tag_POST =  request_tag_config.get("POST",{})
+        if not tag_POST:
+            return json({"code":400,"msg":"tag '%s' not support apijson_post"%(tag)})
         ADD = tag_POST.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -501,9 +503,9 @@ class ApiJson(object):
             return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
 
         permission_check_ok = False
-        PUT = model_setting.get("PUT")
-        if PUT:
-            roles = PUT.get("roles")
+        model_PUT = model_setting.get("PUT")
+        if model_PUT:
+            roles = model_PUT.get("roles")
             if params_role:
                 if not params_role in roles:
                     return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
@@ -528,6 +530,13 @@ class ApiJson(object):
 
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
+
+        DISALLOW = tag_PUT.get("DISALLOW")
+        if DISALLOW:
+            for field in DISALLOW:
+                if field in params:
+                    log.error("request '%s' disallow '%s'"%(tag,field))
+                    return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
         kwargs = {}
         for k in params:
