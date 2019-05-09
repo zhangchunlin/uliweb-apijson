@@ -4,6 +4,7 @@ Vue.component('apijson-table', {
     props: [
         "table_name",
         "config",
+        "custom_tcolumns_render_generator",
         "hook_init",
         "hook_ajax_params"
     ],
@@ -139,7 +140,13 @@ Vue.component('apijson-table', {
             for (var k in this.tcolumns) {
                 var c = this.tcolumns[k]
                 if (c.component!=null) {
-                    var g = this.tcolumns_render_generator[c.component]
+                    var g = null
+                    if (this.custom_tcolumns_render_generator!=null) {
+                        g = this.custom_tcolumns_render_generator[c.component]
+                    }
+                    if (g==null) {
+                        g = this.tcolumns_render_generator[c.component]
+                    }
                     if (g!=null){
                         c.render = g(c.key)
                     }
@@ -397,6 +404,7 @@ Vue.component('apijson-table', {
             for (var k in this.add_items){
                 var d = this.add_items[k]
                 d.value = null
+                d.component = d.component || "input"
             }
             this.modal_add = true
         },
@@ -453,7 +461,7 @@ Vue.component('apijson-table', {
             this.config_table_fields = this.config.table_fields || null
             this.config_viewedit_fields = this.config.viewedit_fields || null
             this.config_add_fields = this.config.add_fields || null
-            if (this.config.add_fields!=null) {
+            if (this.config_add_fields!=null) {
                 this.add_items = this.config_add_fields
             }
             if (this.config.default_page_size!=null) {
@@ -462,6 +470,8 @@ Vue.component('apijson-table', {
             this.config_delete_set_deleted = this.config.delete_set_deleted || false
             this.config_deleted_field_name = this.config.deleted_field_name || "deleted"
         }
+        //if not do this, the first notice will hide behind the navigation bar in uliweb apps
+        this.$Notice.config({top: 100,duration: 8});
         if (this.hook_init!=null) {
             this.hook_init(this)
         }
