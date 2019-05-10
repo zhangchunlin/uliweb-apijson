@@ -355,21 +355,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _post_one(self,key,tag):
-        modelname = key
+        APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
+        request_tag = APIJSON_REQUESTS.get(tag,{})
+        model_name = request_tag.get("@model_name") or tag
+
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
-        _model_name = request_tag.get("@model_name") or tag
-        request_tag_config = request_tag.get(_model_name,{})
+        request_tag_config = request_tag.get(model_name,{})
         if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
         tag_POST =  request_tag_config.get("POST",{})
@@ -387,7 +388,7 @@ class ApiJson(object):
             roles = model_POST.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
                 roles = [params_role]
 
             if roles:
@@ -466,22 +467,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _put_one(self,key,tag):
-        modelname = key
+        APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
+        request_tag = APIJSON_REQUESTS.get(tag,{})
+        model_name = request_tag.get("@model_name") or tag
+
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
-        request_tag = APIJSON_REQUESTS.get(tag,{})
-        _model_name = request_tag.get("@model_name") or tag
-        request_tag_config = request_tag.get(_model_name,{})
+        request_tag_config = request_tag.get(model_name,{})
         if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
         tag_PUT = request_tag_config.get("PUT",{})
@@ -508,7 +509,7 @@ class ApiJson(object):
             roles = model_PUT.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
                 roles = [params_role]
             if roles:
                 for role in roles:
@@ -538,6 +539,12 @@ class ApiJson(object):
                     log.error("request '%s' disallow '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
+        NECESSARY = tag_PUT.get("NECESSARY")
+        if NECESSARY:
+            for field in NECESSARY:
+                if field not in params:
+                    log.error("request '%s' have not necessary field '%s'"%(tag,field))
+                    return json({"code":400,"msg":"request '%s' have not necessary field '%s'"%(tag,field)})
         kwargs = {}
         for k in params:
             if k=="id":
@@ -545,7 +552,7 @@ class ApiJson(object):
             elif hasattr(obj,k):
                 kwargs[k] = params[k]
             else:
-                return json({"code":400,"msg":"'%s' don't have field '%s'"%(modelname,k)})
+                return json({"code":400,"msg":"'%s' don't have field '%s'"%(model_name,k)})
         obj.update(**kwargs)
         ret = obj.save()
         obj_dict = {"id":id_}
@@ -582,21 +589,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _delete_one(self,key,tag):
-        modelname = key
+        APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
+        request_tag = APIJSON_REQUESTS.get(tag,{})
+        model_name = request_tag.get("@model_name") or tag
+
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
             user_id_field = model_setting.get("user_id_field")
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag = settings.APIJSON_REQUESTS.get(tag,{})
-        _model_name = request_tag.get("@model_name") or tag
-        request_tag_config = request_tag.get(_model_name,{})
+        request_tag_config = request_tag.get(model_name,{})
         if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
         tag_DELETE =  request_tag_config.get("DELETE",{})
@@ -623,7 +631,7 @@ class ApiJson(object):
             roles = DELETE.get("roles")
             if params_role:
                 if not params_role in roles:
-                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
                 roles = [params_role]
             if roles:
                 for role in roles:
@@ -650,7 +658,7 @@ class ApiJson(object):
             obj.delete()
             ret = True
         except Exception as e:
-            log.error("remove %s %s fail"%(modelname,id_))
+            log.error("remove %s %s fail"%(model_name,id_))
             ret = False
 
         obj_dict = {"id":id_}
