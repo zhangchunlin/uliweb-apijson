@@ -86,6 +86,7 @@ Vue.component('apijson-viewedit', {
                 var d = this.viewedit_items[k]
                 if (d.key=="id"|| d.value!=this.row_saved[d.key]) {
                     record_params[d.key] = d.value
+                    this.row[d.key] = d.value
                 }
             }
             params[this.l_request_tag] = record_params
