@@ -1,10 +1,19 @@
-这是 APIJSON 的 Python 版后端实现，基于 uliweb 框架。
+uliweb-apijson is a subset and slightly different variation of [apijson](https://github.com/TommyLemon/APIJSON/blob/master/Document.md)
+
+You can try:
+
+- [Demo uliweb project](demo/README.md)
+- [uliweb-apijson document](uliweb_apijson/apijson/README.md)
+
+------
+
+uliweb-apijson 是 APIJSON 的 Python 版后端实现，基于 uliweb 框架。
 
 <h1 align="center" style="text-align:center;">
   APIJSON
 </h1>
- 
-<p align="center">🏆码云最有价值开源项目<br />🚀后端接口和文档自动化，前端(客户端) 定制返回JSON的数据和结构！</p>
+
+<p align="center">�码云最有价值开源项目<br />�后端接口和文档自动化，前端(客户端) 定制返回JSON的数据和结构！</p>
 
 <p align="center" >
   <a href="https://github.com/TommyLemon/APIJSON/tree/master/MySQL"><img src="https://img.shields.io/badge/MySQL-5.7%2B-brightgreen.svg?style=flat"></a>
@@ -34,7 +43,6 @@
 <p align="center" >
   <img src="https://raw.githubusercontent.com/TommyLemon/APIJSON/master/logo.png" />
 </p>
-
 ---
 
 
