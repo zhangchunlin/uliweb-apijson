@@ -45,6 +45,7 @@ moment = {
         "PUT" :{
             "ADD":{"@role": "OWNER"},
             "NECESSARY" : ["id","content"],
+            "DISALLOW" : ["email"],
         },
     }
 }

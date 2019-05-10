@@ -3,6 +3,7 @@ from uliweb import expose, functions, models
 from uliweb.orm import ModelNotFound
 from json import loads
 import logging
+import traceback
 
 log = logging.getLogger('apijson')
 
@@ -20,7 +21,7 @@ class ApiJson(object):
         except Exception as e:
             log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
             return json({"code":400,"msg":"not json data in the request"})
-    
+
     def apply_vars(self):
         for key in self.request_data:
             if key[-1]=="@":
@@ -155,7 +156,7 @@ class ApiJson(object):
         #model settings
         model_setting = settings.APIJSON_MODELS.get(modelname,{})
         secret_fields = model_setting.get("secret_fields")
-        
+
         #model params
         #column
         model_param = params[n]
@@ -273,7 +274,7 @@ class ApiJson(object):
             log.error(err)
             traceback.print_exc()
             return json({"code":400,"msg":err})
-        
+
         return json(self.rdict)
 
     def _head(self,key):
@@ -293,7 +294,7 @@ class ApiJson(object):
         HEAD = model_setting.get("HEAD")
         if not HEAD:
             return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
-        
+
         roles = HEAD.get("roles")
         permission_check_ok = False
         if not params_role:
@@ -372,6 +373,8 @@ class ApiJson(object):
         if not request_tag_config:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
         tag_POST =  request_tag_config.get("POST",{})
+        if not tag_POST:
+            return json({"code":400,"msg":"tag '%s' not support apijson_post"%(tag)})
         ADD = tag_POST.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -379,9 +382,9 @@ class ApiJson(object):
                 params_role = ADD_role
 
         permission_check_ok = False
-        POST = model_setting.get("POST")
-        if POST:
-            roles = POST.get("roles")
+        model_POST = model_setting.get("POST")
+        if model_POST:
+            roles = model_POST.get("roles")
             if params_role:
                 if not params_role in roles:
                     return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
@@ -408,17 +411,17 @@ class ApiJson(object):
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
-        DISALLOW = POST.get("DISALLOW")
+        DISALLOW = tag_POST.get("DISALLOW")
         if DISALLOW:
             for field in DISALLOW:
                 if field in params:
                     log.error("request '%s' disallow '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
 
-        NECESSARY = POST.get("NECESSARY")
+        NECESSARY = tag_POST.get("NECESSARY")
         if NECESSARY:
             for field in NECESSARY:
-                if field not in params:
+                if field not in params or params.get(field)==None:
                     log.error("request '%s' don't have necessary field '%s'"%(tag,field))
                     return json({"code":400,"msg":"request '%s' don't have necessary field '%s'"%(tag,field)})
 
@@ -474,7 +477,7 @@ class ApiJson(object):
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
-        
+
         APIJSON_REQUESTS = settings.APIJSON_REQUESTS or {}
         request_tag = APIJSON_REQUESTS.get(tag,{})
         _model_name = request_tag.get("@model_name") or tag
@@ -500,9 +503,9 @@ class ApiJson(object):
             return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
 
         permission_check_ok = False
-        PUT = model_setting.get("PUT")
-        if PUT:
-            roles = PUT.get("roles")
+        model_PUT = model_setting.get("PUT")
+        if model_PUT:
+            roles = model_PUT.get("roles")
             if params_role:
                 if not params_role in roles:
                     return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
@@ -527,7 +530,14 @@ class ApiJson(object):
 
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
-        
+
+        DISALLOW = tag_PUT.get("DISALLOW")
+        if DISALLOW:
+            for field in DISALLOW:
+                if field in params:
+                    log.error("request '%s' disallow '%s'"%(tag,field))
+                    return json({"code":400,"msg":"request '%s' disallow '%s'"%(tag,field)})
+
         kwargs = {}
         for k in params:
             if k=="id":
@@ -583,7 +593,7 @@ class ApiJson(object):
         except ModelNotFound as e:
             log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
             return json({"code":400,"msg":"model '%s' not found"%(modelname)})
-        
+
         request_tag = settings.APIJSON_REQUESTS.get(tag,{})
         _model_name = request_tag.get("@model_name") or tag
         request_tag_config = request_tag.get(_model_name,{})
