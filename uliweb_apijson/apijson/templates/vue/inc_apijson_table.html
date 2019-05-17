@@ -2,7 +2,8 @@
 Vue.component('apijson-table', {
     delimiters: ['{', '}'],
     props: [
-        "table_name",
+        "model_name", //apijson model name
+        "request_tag", //apijson request tag, default will be same with model name
         "config",
         "custom_tcolumns_render_generator",
         "hook_init",
@@ -44,12 +45,14 @@ Vue.component('apijson-table', {
         </div>
     </modal>
     <modal v-model="modal_delete" title="Confirm to delete" @on-ok="real_remove">
-        <p>Confirm to delete #{delete_params.row&&delete_params.row.id} in table '{table_name}'?</p>
+        <p>Confirm to delete #{delete_params.row&&delete_params.row.id} in table '{model_name}'?</p>
     </modal>
 </div>`,
     data: function(){
         var thisp = this
         return {
+            l_request_tag: null,
+
             loading: false,
             modal_view: false,
             viewedit_items: [],
@@ -172,7 +175,7 @@ Vue.component('apijson-table', {
                 "@page":thisp.current_page-1,
                 "@query":2
             }
-            arr_params[this.table_name] = {
+            arr_params[this.model_name] = {
                 "@order":thisp.sort_key+thisp.sort_order,
                 "@role":"{{=role}}"
             }
@@ -225,7 +228,7 @@ Vue.component('apijson-table', {
                     }
                     else {
                         thisp.$Notice.error({
-                            title: 'error when get table '+thisp.table_name,
+                            title: 'error when get table '+thisp.model_name,
                             desc: data.msg
                         })
                     }
@@ -276,18 +279,19 @@ Vue.component('apijson-table', {
         save: function(){
             var thisp = this
             var params = {
-                "@tag": thisp.table_name
+                "@tag": thisp.l_request_tag
             }
             var record_params = {}
             var row = thisp.edit_params.row
 
+            //only save modified fields
             for (var k in thisp.viewedit_items) {
                 var d = thisp.viewedit_items[k]
                 if (d.key=="id"|| d.value!=row[d.key]) {
                     record_params[d.key] = d.value
                 }
             }
-            params[thisp.table_name] = record_params
+            params[thisp.l_request_tag] = record_params
             params = thisp.ajax_hook("apijson_put","update",params)
             $.ajax({
                 type: "POST",
@@ -297,7 +301,7 @@ Vue.component('apijson-table', {
                 success: function (data) {
                     if (data.code==200){
                         thisp.$Notice.success({
-                            title: 'success update #'+row.id+' in table '+thisp.table_name,
+                            title: 'success update #'+row.id+' in table '+thisp.model_name,
                             desc: data.msg
                         })
                         thisp.modal_view = false
@@ -305,7 +309,7 @@ Vue.component('apijson-table', {
                     }
                     else {
                         thisp.$Notice.error({
-                            title: 'error when update #'+row.id+' in table '+thisp.table_name,
+                            title: 'error when update #'+row.id+' in table '+thisp.model_name,
                             desc: data.msg
                         })
                     }
@@ -323,13 +327,13 @@ Vue.component('apijson-table', {
         real_remove_set_deleted: function(){
             var thisp = this
             var params = {
-                "@tag": thisp.table_name
+                "@tag": thisp.l_request_tag
             }
             var params_table = {
                 "id": thisp.delete_params.row.id,
             }
             params_table[this.config_deleted_field_name] = true
-            params[thisp.table_name] = params_table
+            params[thisp.l_request_tag] = params_table
 
             params = thisp.ajax_hook("apijson_put","delete",params)
 
@@ -341,21 +345,21 @@ Vue.component('apijson-table', {
                 success: function (data) {
                     if (data.code!=200){
                         thisp.$Notice.error({
-                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                             desc: data.msg
                         })
                         return
                     }
-                    var result = data[thisp.table_name]
+                    var result = data[thisp.l_request_tag]
                     if (result.code!=200){
                         thisp.$Notice.error({
-                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                             desc: result.msg
                         })
                         return
                     }
                     thisp.$Notice.success({
-                        title: 'success remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                        title: 'success remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                         desc: result.msg
                     })
                     thisp.update_list()
@@ -365,9 +369,9 @@ Vue.component('apijson-table', {
         real_remove_delete: function(){
             var thisp = this
             var params = {
-                "@tag": thisp.table_name
+                "@tag": thisp.l_request_tag
             }
-            params[thisp.table_name] = {
+            params[thisp.l_request_tag] = {
                 "id": thisp.delete_params.row.id
             }
             params = thisp.ajax_hook("apijson_delete","delete",params)
@@ -379,21 +383,21 @@ Vue.component('apijson-table', {
                 success: function (data) {
                     if (data.code!=200){
                         thisp.$Notice.error({
-                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                             desc: data.msg
                         })
                         return
                     }
-                    var result = data[thisp.table_name]
+                    var result = data[thisp.l_request_tag]
                     if (result.code!=200){
                         thisp.$Notice.error({
-                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                            title: 'error when remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                             desc: result.msg
                         })
                         return
                     }
                     thisp.$Notice.success({
-                        title: 'success remove #'+thisp.delete_params.row.id+' in table '+thisp.table_name,
+                        title: 'success remove #'+thisp.delete_params.row.id+' in table '+thisp.model_name,
                         desc: result.msg
                     })
                     thisp.update_list()
@@ -411,14 +415,14 @@ Vue.component('apijson-table', {
         real_add: function(){
             thisp = this
             var params = {
-                "@tag": thisp.table_name
+                "@tag": thisp.l_request_tag
             }
             var post_params = {}
             for (var k in thisp.add_items) {
                 var d = thisp.add_items[k]
                 post_params[d.key] = d.value
             }
-            params[this.table_name] = post_params
+            params[this.l_request_tag] = post_params
             params = thisp.ajax_hook("apijson_post","add",params)
             $.ajax({
                 type: "POST",
@@ -428,14 +432,14 @@ Vue.component('apijson-table', {
                 success: function (data) {
                     if (data.code!=200){
                         thisp.$Notice.error({
-                            title: 'error when add new record in table '+thisp.table_name,
+                            title: 'error when add new record in table '+thisp.model_name,
                             desc: data.msg
                         })
                         return
                     }
-                    var result = data[thisp.table_name]
+                    var result = data[thisp.l_request_tag]
                     thisp.$Notice.success({
-                        title: 'success add #'+result.id+' in table '+thisp.table_name,
+                        title: 'success add #'+result.id+' in table '+thisp.model_name,
                         desc: result.msg
                     })
                     thisp.update_list()
@@ -456,6 +460,13 @@ Vue.component('apijson-table', {
         }
     },
     mounted: function(){
+        if (this.request_tag==null) {
+            this.l_request_tag = this.model_name
+        }
+        else {
+            this.l_request_tag = this.request_tag
+        }
+
         if (this.config!=null){
             this.config_editable = this.config.editable || false
             this.config_table_fields = this.config.table_fields || null
