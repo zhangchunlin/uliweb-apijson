@@ -50,22 +50,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _get_one(self,key):
-        modelname = key
+        model_name = key
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
         model_column_set = None
         q = model.all()
 
         GET = model_setting.get("GET")
         if not GET:
-            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible"%(model_name)})
 
         roles = GET.get("roles")
         permission_check_ok = False
@@ -75,7 +75,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -88,7 +88,7 @@ class ApiJson(object):
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
         params = self.request_data[key]
         if isinstance(params,dict):
@@ -99,7 +99,7 @@ class ApiJson(object):
                 elif hasattr(model,n):
                     q = q.filter(getattr(model.c,n)==params[n])
                 else:
-                    return json({"code":400,"msg":"'%s' have no attribute '%s'"%(modelname,n)})
+                    return json({"code":400,"msg":"'%s' have no attribute '%s'"%(model_name,n)})
         o = q.one()
         if o:
             o = o.to_dict()
@@ -116,7 +116,7 @@ class ApiJson(object):
 
     def _get_array(self,key):
         params = self.request_data[key]
-        modelname = None
+        model_name = None
         model_param = None
         model_column_set = None
 
@@ -147,14 +147,14 @@ class ApiJson(object):
         for n in params:
             if n[0]!="@":
                 # TODO: support join in the future, now only support 1 model
-                modelname = n
+                model_name = n
                 break
 
-        if not modelname:
+        if not model_name:
             return json({"code":400,"msg":"no model found in array query"})
 
         #model settings
-        model_setting = settings.APIJSON_MODELS.get(modelname,{})
+        model_setting = settings.APIJSON_MODELS.get(model_name,{})
         secret_fields = model_setting.get("secret_fields")
 
         #model params
@@ -164,10 +164,10 @@ class ApiJson(object):
         if model_column:
             model_column_set = set(model_column.split(","))
         try:
-            model = getattr(models,modelname)
+            model = getattr(models,model_name)
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
         #order
         model_order = model_param.get("@order")
 
@@ -175,7 +175,7 @@ class ApiJson(object):
 
         GET = model_setting.get("GET")
         if not GET:
-            return json({"code":400,"msg":"'%s' not accessible by apijson"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible by apijson"%(model_name)})
 
         roles = GET.get("roles")
         params_role = model_param.get("@role")
@@ -186,7 +186,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -200,7 +200,7 @@ class ApiJson(object):
         if params_role == "OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
         for n in model_param:
             if n[0]!="@":
@@ -209,7 +209,7 @@ class ApiJson(object):
                     if hasattr(model,name):
                         q = q.filter(getattr(model.c,name).like(model_param[n]))
                     else:
-                        return  json({"code":400,"msg":"'%s' does not have '%s'"%(modelname,name)})
+                        return  json({"code":400,"msg":"'%s' does not have '%s'"%(model_name,name)})
                 elif n[-1]=="}" and n[-2]=="{":
                     name = n[:-2]
                     if hasattr(model,name):
@@ -280,22 +280,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _head(self,key):
-        modelname = key
+        model_name = key
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
         q = model.all()
 
         HEAD = model_setting.get("HEAD")
         if not HEAD:
-            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible"%(model_name)})
 
         roles = HEAD.get("roles")
         permission_check_ok = False
@@ -305,7 +305,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -318,14 +318,14 @@ class ApiJson(object):
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
         for n in params:
             if n[0]=="@":
                 pass
             else:
                 param = params[n]
                 if not hasattr(model.c,n):
-                    return  json({"code":400,"msg":"'%s' don't have field '%s'"%(modelname,n)})
+                    return  json({"code":400,"msg":"'%s' don't have field '%s'"%(model_name,n)})
                 q = model.filter(getattr(model.c,n)==param)
         rdict = {
             "code":200,
