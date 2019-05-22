@@ -208,6 +208,8 @@ class ApiJson(object):
                     name = n[:-1]
                     if hasattr(model,name):
                         q = q.filter(getattr(model.c,name).like(model_param[n]))
+                    else:
+                        return  json({"code":400,"msg":"'%s' does not have '%s'"%(modelname,name)})
                 elif n[-1]=="}" and n[-2]=="{":
                     name = n[:-2]
                     if hasattr(model,name):
@@ -370,10 +372,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_POST =  request_tag_config.get("POST",{})
+        tag_POST =  request_tag.get("POST",{})
         if not tag_POST:
             return json({"code":400,"msg":"tag '%s' not support apijson_post"%(tag)})
         ADD = tag_POST.get("ADD")
@@ -482,10 +483,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_PUT = request_tag_config.get("PUT",{})
+        tag_PUT = request_tag.get("PUT",{})
         ADD = tag_PUT.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -604,10 +604,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_DELETE =  request_tag_config.get("DELETE",{})
+        tag_DELETE =  request_tag.get("DELETE",{})
         ADD = tag_DELETE.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
