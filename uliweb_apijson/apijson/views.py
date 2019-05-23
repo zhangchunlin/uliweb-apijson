@@ -1,6 +1,7 @@
 #coding=utf-8
-from uliweb import expose, functions, models
+from uliweb import expose, functions, models, UliwebError
 from uliweb.orm import ModelNotFound
+from sqlalchemy.sql import and_, or_, not_
 from json import loads
 import logging
 import traceback
@@ -50,22 +51,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _get_one(self,key):
-        modelname = key
+        model_name = key
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
         model_column_set = None
         q = model.all()
 
         GET = model_setting.get("GET")
         if not GET:
-            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible"%(model_name)})
 
         roles = GET.get("roles")
         permission_check_ok = False
@@ -75,7 +76,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -88,7 +89,7 @@ class ApiJson(object):
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
         params = self.request_data[key]
         if isinstance(params,dict):
@@ -99,7 +100,7 @@ class ApiJson(object):
                 elif hasattr(model,n):
                     q = q.filter(getattr(model.c,n)==params[n])
                 else:
-                    return json({"code":400,"msg":"'%s' have no attribute '%s'"%(modelname,n)})
+                    return json({"code":400,"msg":"'%s' have no attribute '%s'"%(model_name,n)})
         o = q.one()
         if o:
             o = o.to_dict()
@@ -116,7 +117,7 @@ class ApiJson(object):
 
     def _get_array(self,key):
         params = self.request_data[key]
-        modelname = None
+        model_name = None
         model_param = None
         model_column_set = None
 
@@ -147,14 +148,14 @@ class ApiJson(object):
         for n in params:
             if n[0]!="@":
                 # TODO: support join in the future, now only support 1 model
-                modelname = n
+                model_name = n
                 break
 
-        if not modelname:
+        if not model_name:
             return json({"code":400,"msg":"no model found in array query"})
 
         #model settings
-        model_setting = settings.APIJSON_MODELS.get(modelname,{})
+        model_setting = settings.APIJSON_MODELS.get(model_name,{})
         secret_fields = model_setting.get("secret_fields")
 
         #model params
@@ -164,10 +165,10 @@ class ApiJson(object):
         if model_column:
             model_column_set = set(model_column.split(","))
         try:
-            model = getattr(models,modelname)
+            model = getattr(models,model_name)
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
         #order
         model_order = model_param.get("@order")
 
@@ -175,7 +176,7 @@ class ApiJson(object):
 
         GET = model_setting.get("GET")
         if not GET:
-            return json({"code":400,"msg":"'%s' not accessible by apijson"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible by apijson"%(model_name)})
 
         roles = GET.get("roles")
         params_role = model_param.get("@role")
@@ -186,7 +187,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -200,21 +201,18 @@ class ApiJson(object):
         if params_role == "OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
-        for n in model_param:
-            if n[0]!="@":
-                if n[-1]=="$":
-                    name = n[:-1]
-                    if hasattr(model,name):
-                        q = q.filter(getattr(model.c,name).like(model_param[n]))
-                elif n[-1]=="}" and n[-2]=="{":
-                    name = n[:-2]
-                    if hasattr(model,name):
-                        # TODO
-                        pass
-                elif hasattr(model,n):
-                    q = q.filter(getattr(model.c,n)==model_param[n])
+        model_expr = model_param.get("@expr")
+
+        if model_expr:
+            c = self._expr(model,model_param,model_expr)
+            q = q.filter(c)
+        else:
+            for n in model_param:
+                if n[0]!="@":
+                    c = self._get_filter_condition(model,model_param,n)
+                    q = q.filter(c)
 
         if query_type in [1,2]:
             self.vars["/%s/total"%(key)] = q.count()
@@ -264,6 +262,60 @@ class ApiJson(object):
                 owner_filtered = True
         return owner_filtered,q
 
+    def _expr(self,model,model_param,model_expr):
+        if not isinstance(model_expr,list):
+            raise UliwebError("only accept array in @expr: '%s'"%(model_expr))
+        num = len(model_expr)
+        if (num<2 or num>3):
+            raise UliwebError("only accept 2 or 3 items in @expr: '%s'"%(model_expr))
+        op = model_expr[-2]
+        if op=='&':
+            if num!=3:
+                raise UliwebError("'&'(and) expression need 3 items: '%s'"%(model_expr))
+            c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
+            c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
+            return and_(c1,c2)
+        elif op=='|':
+            if num!=3:
+                raise UliwebError("'|'(or) expression need 3 items: '%s'"%(model_expr))
+            c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
+            c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
+            return or_(c1,c2)
+        elif op=='!':
+            if num!=2:
+                raise UliwebError("'!'(not) expression need 2 items: '%s'"%(model_expr))
+            return not_(self._get_filter_condition(model,model_param,model_expr[1],expr=True))
+        else:
+            raise UliwebError("unknown operator: '%s'"%(op))
+
+    def _get_filter_condition(self,model,model_param,item,expr=False):
+        if isinstance(item,list):
+            if expr:
+                return self._expr(model,model_param,model_expr=item)
+            else:
+                raise UliwebError("item can be array only in @expr: '%s'"%(item))
+        if not isinstance(item,str):
+            raise UliwebError("item should be array or string: '%s'"%(item))
+        n = item
+        if n[0]=="@":
+            raise UliwebError("param key should not begin with @: '%s'"%(n))
+        if n[-1]=="$":
+            name = n[:-1]
+            if hasattr(model,name):
+                return getattr(model.c,name).like(model_param[n])
+            else:
+                raise UliwebError("'%s' does not have '%s'"%(model_name,name))
+        elif n[-1]=="}" and n[-2]=="{":
+            name = n[:-2]
+            if hasattr(model,name):
+                # TODO
+                pass
+            raise UliwebError("still not support '%s'"%(name))
+        elif hasattr(model,n):
+            return getattr(model.c,n)==model_param[n]
+        else:
+            raise UliwebError("not support item: '%s'"%(item))
+
     def head(self):
         try:
             for key in self.request_data:
@@ -278,22 +330,22 @@ class ApiJson(object):
         return json(self.rdict)
 
     def _head(self,key):
-        modelname = key
+        model_name = key
         params = self.request_data[key]
         params_role = params.get("@role")
 
         try:
-            model = getattr(models,modelname)
-            model_setting = settings.APIJSON_MODELS.get(modelname,{})
+            model = getattr(models,model_name)
+            model_setting = settings.APIJSON_MODELS.get(model_name,{})
         except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(modelname,e))
-            return json({"code":400,"msg":"model '%s' not found"%(modelname)})
+            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
+            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
         q = model.all()
 
         HEAD = model_setting.get("HEAD")
         if not HEAD:
-            return json({"code":400,"msg":"'%s' not accessible"%(modelname)})
+            return json({"code":400,"msg":"'%s' not accessible"%(model_name)})
 
         roles = HEAD.get("roles")
         permission_check_ok = False
@@ -303,7 +355,7 @@ class ApiJson(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(modelname,params_role)})
+            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
         elif functions.has_role(request.user,params_role):
@@ -316,14 +368,14 @@ class ApiJson(object):
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(modelname)})
+                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
         for n in params:
             if n[0]=="@":
                 pass
             else:
                 param = params[n]
                 if not hasattr(model.c,n):
-                    return  json({"code":400,"msg":"'%s' don't have field '%s'"%(modelname,n)})
+                    return  json({"code":400,"msg":"'%s' don't have field '%s'"%(model_name,n)})
                 q = model.filter(getattr(model.c,n)==param)
         rdict = {
             "code":200,
@@ -370,10 +422,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_POST =  request_tag_config.get("POST",{})
+        tag_POST =  request_tag.get("POST",{})
         if not tag_POST:
             return json({"code":400,"msg":"tag '%s' not support apijson_post"%(tag)})
         ADD = tag_POST.get("ADD")
@@ -482,10 +533,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_PUT = request_tag_config.get("PUT",{})
+        tag_PUT = request_tag.get("PUT",{})
         ADD = tag_PUT.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
@@ -604,10 +654,9 @@ class ApiJson(object):
             log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
             return json({"code":400,"msg":"model '%s' not found"%(model_name)})
 
-        request_tag_config = request_tag.get(model_name,{})
-        if not request_tag_config:
+        if not request_tag:
             return json({"code":400,"msg":"tag '%s' not found"%(tag)})
-        tag_DELETE =  request_tag_config.get("DELETE",{})
+        tag_DELETE =  request_tag.get("DELETE",{})
         ADD = tag_DELETE.get("ADD")
         if ADD:
             ADD_role = ADD.get("@role")
