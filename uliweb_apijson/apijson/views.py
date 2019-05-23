@@ -1,6 +1,7 @@
 #coding=utf-8
-from uliweb import expose, functions, models
+from uliweb import expose, functions, models, UliwebError
 from uliweb.orm import ModelNotFound
+from sqlalchemy.sql import and_, or_, not_
 from json import loads
 import logging
 import traceback
@@ -202,21 +203,16 @@ class ApiJson(object):
             if not owner_filtered:
                 return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
-        for n in model_param:
-            if n[0]!="@":
-                if n[-1]=="$":
-                    name = n[:-1]
-                    if hasattr(model,name):
-                        q = q.filter(getattr(model.c,name).like(model_param[n]))
-                    else:
-                        return  json({"code":400,"msg":"'%s' does not have '%s'"%(model_name,name)})
-                elif n[-1]=="}" and n[-2]=="{":
-                    name = n[:-2]
-                    if hasattr(model,name):
-                        # TODO
-                        pass
-                elif hasattr(model,n):
-                    q = q.filter(getattr(model.c,n)==model_param[n])
+        model_expr = model_param.get("@expr")
+
+        if model_expr:
+            c = self._expr(model,model_param,model_expr)
+            q = q.filter(c)
+        else:
+            for n in model_param:
+                if n[0]!="@":
+                    c = self._get_filter_condition(model,model_param,n)
+                    q = q.filter(c)
 
         if query_type in [1,2]:
             self.vars["/%s/total"%(key)] = q.count()
@@ -265,6 +261,60 @@ class ApiJson(object):
                 q = q.filter(getattr(model.c,user_id_field)==request.user.id)
                 owner_filtered = True
         return owner_filtered,q
+
+    def _expr(self,model,model_param,model_expr):
+        if not isinstance(model_expr,list):
+            raise UliwebError("only accept array in @expr: '%s'"%(model_expr))
+        num = len(model_expr)
+        if (num<2 or num>3):
+            raise UliwebError("only accept 2 or 3 items in @expr: '%s'"%(model_expr))
+        op = model_expr[-2]
+        if op=='&':
+            if num!=3:
+                raise UliwebError("'&'(and) expression need 3 items: '%s'"%(model_expr))
+            c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
+            c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
+            return and_(c1,c2)
+        elif op=='|':
+            if num!=3:
+                raise UliwebError("'|'(or) expression need 3 items: '%s'"%(model_expr))
+            c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
+            c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
+            return or_(c1,c2)
+        elif op=='!':
+            if num!=2:
+                raise UliwebError("'!'(not) expression need 2 items: '%s'"%(model_expr))
+            return not_(self._get_filter_condition(model,model_param,model_expr[1],expr=True))
+        else:
+            raise UliwebError("unknown operator: '%s'"%(op))
+
+    def _get_filter_condition(self,model,model_param,item,expr=False):
+        if isinstance(item,list):
+            if expr:
+                return self._expr(model,model_param,model_expr=item)
+            else:
+                raise UliwebError("item can be array only in @expr: '%s'"%(item))
+        if not isinstance(item,str):
+            raise UliwebError("item should be array or string: '%s'"%(item))
+        n = item
+        if n[0]=="@":
+            raise UliwebError("param key should not begin with @: '%s'"%(n))
+        if n[-1]=="$":
+            name = n[:-1]
+            if hasattr(model,name):
+                return getattr(model.c,name).like(model_param[n])
+            else:
+                raise UliwebError("'%s' does not have '%s'"%(model_name,name))
+        elif n[-1]=="}" and n[-2]=="{":
+            name = n[:-2]
+            if hasattr(model,name):
+                # TODO
+                pass
+            raise UliwebError("still not support '%s'"%(name))
+        elif hasattr(model,n):
+            return getattr(model.c,n)==model_param[n]
+        else:
+            raise UliwebError("not support item: '%s'"%(item))
 
     def head(self):
         try:
