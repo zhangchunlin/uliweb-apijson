@@ -79,6 +79,41 @@ def index():
   }
 }''',
         },
+        {
+            "label":"Array query: simple @expr",
+            "value":'''{
+  "[]":{
+    "@count":4,
+    "@page":0,
+    "user":{
+        "@column":"id,username,nickname,email",
+        "@order":"id-",
+        "@role":"ADMIN",
+        "@expr":["username$","|","nickname$"],
+        "username$":"%b%",
+        "nickname$":"%c%"
+    }
+  }
+}''',
+        },
+        {
+            "label":"Array query: complex @expr",
+            "value":'''{
+  "[]":{
+    "@count":4,
+    "@page":0,
+    "user":{
+        "@column":"id,username,nickname,email",
+        "@order":"id-",
+        "@role":"ADMIN",
+        "@expr":[["username$","&","email$"],"&",["!","nickname$"]],,
+        "username$":"%b%",
+        "nickname$":"%Admin%",
+        "email$":"%local%"
+    }
+  }
+}''',
+        },
     ]
 
     request_head = [
@@ -141,7 +176,6 @@ def index():
 }''',
         },
     ]
-
     return {
         "user_info":user_info,
         "request_get_json":dumps(request_get),
