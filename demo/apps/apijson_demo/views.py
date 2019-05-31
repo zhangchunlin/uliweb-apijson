@@ -106,7 +106,7 @@ def index():
         "@column":"id,username,nickname,email",
         "@order":"id-",
         "@role":"ADMIN",
-        "@expr":[["username$","&","email$"],"&",["!","nickname$"]],,
+        "@expr":[["username$","&","email$"],"&",["!","nickname$"]],
         "username$":"%b%",
         "nickname$":"%Admin%",
         "email$":"%local%"
