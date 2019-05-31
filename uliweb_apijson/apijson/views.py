@@ -23,7 +23,7 @@ class ApiJson(object):
             log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
             return json({"code":400,"msg":"not json data in the request"})
 
-    def apply_vars(self):
+    def _apply_vars(self):
         for key in self.request_data:
             if key[-1]=="@":
                 k = self.request_data[key]
@@ -42,12 +42,12 @@ class ApiJson(object):
                 else:
                     rsp = self._get_one(key)
                 if rsp: return rsp
-            self.apply_vars()
+            self._apply_vars()
         except Exception as e:
             err = "exception when handling 'apijson get': %s"%(e)
             log.error(err)
             traceback.print_exc()
-            return json({"code":400,"msg":err})
+            return json({"code":400,"msg":"get exception when handling 'apijson get',please check server side log"})
         return json(self.rdict)
 
     def _get_one(self,key):
