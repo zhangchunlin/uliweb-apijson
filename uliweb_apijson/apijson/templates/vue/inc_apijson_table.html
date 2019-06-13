@@ -447,8 +447,10 @@ Vue.component('apijson-table', {
                 }
             })
         },
-        table_on_sort_change: function(){
-
+        table_on_sort_change: function(params){
+            this.sort_key = params.key
+            this.sort_order = params.order=="asc" ? "+" : "-"
+            this.update_list()
         },
         page_on_change: function(data) {
             this.update_list()
