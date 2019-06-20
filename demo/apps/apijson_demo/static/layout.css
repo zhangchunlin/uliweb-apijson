@@ -1,0 +1,5 @@
+/* override uliweb_layout/layout/static/layout.css */
+.main-footer {background-color: #3c8dbc; color: #e0e0e0;margin-left:0}
+#layout-body .content-wrapper {border-left:none}
+#layout-body.full .main-header .container { width: 100%; }
+#layout-body.full .content-wrapper > .container { width: 100%; padding: 0; }
