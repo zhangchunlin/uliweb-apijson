@@ -1,10 +1,13 @@
 {{extend "layout_demo.html"}}
 
+{{block content_header_title}}<h1>uliweb-apijson api examples</h1>{{end content_header_title}}
+
 {{block content_main}}
 {{use "ui.vue"}}
 {{use "ui.iview"}}
 
-<div id="app">
+<div id="app" class='box'>
+<div class="box-body">
     <tabs v-model:value="tab_current" type="card" :animated="false">
         <tab-pane label="apijson get" name="tab_get"></tab-pane>
         <tab-pane label="apijson head" name="tab_head"></tab-pane>
@@ -95,6 +98,7 @@
         <i-col span="3"><div align="center">response data</div></i-col>
         <i-col span="8"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
     </Row>
+</div>
 </div>
 <script>
 var vm = new Vue({
