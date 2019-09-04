@@ -175,7 +175,7 @@ Vue.component('apijson-table', {
                 "@page":thisp.current_page-1,
                 "@query":2
             }
-            arr_params[this.model_name] = {
+            arr_params[thisp.model_name] = {
                 "@order":thisp.sort_key+thisp.sort_order,
                 "@role":"{{=role}}"
             }
@@ -194,6 +194,10 @@ Vue.component('apijson-table', {
                     thisp.loading = false
                     if (data.code==200) {
                         var arr = data["[]"]
+                        for (var i=0;i<arr.length;i++) {
+                            arr[i] = arr[i][thisp.model_name]
+                        }
+
                         if (!thisp.tcolumns_init) {
                             if (thisp.config_table_fields!=null){
                                 thisp.tcolumns = thisp.config_table_fields
@@ -210,6 +214,7 @@ Vue.component('apijson-table', {
                                             var col = {title:k,key:k}
                                             if (typeof item[k] ==="boolean") {
                                                 col["width"] = 80
+                                                col["component"] = "checkbox"
                                             }
                                             else if (typeof item[k] ==="number") {
                                                 col["width"] = 100
