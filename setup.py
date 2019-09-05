@@ -13,7 +13,7 @@ def fpath(name):
 def read(fname, default=''):
     filename = fpath(fname)
     if os.path.exists(filename):
-        return open(fpath(fname)).read()
+        return open(fpath(fname),encoding="utf8").read()
     else:
         return default
 

@@ -6,6 +6,14 @@
 {{use "ui.vue"}}
 {{use "ui.iview"}}
 
+<style>
+    .notice
+    {
+        color:red;
+        font-size:150%;
+    }
+</style>
+
 <div id="app" class='box'>
 <div class="box-body">
     <tabs v-model:value="tab_current" type="card" :animated="false">
@@ -29,10 +37,10 @@
             <i-col span="8"><i-input value="/apijson/get" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_get'">
-        <i-col span="3"><div align="center"><strong>apijson get</strong> request examples</div></i-col>
+        <i-col span="3"><div align="center"><strong>apijson get</strong> request <span class="notice">{request_get.length}</span> examples</div></i-col>
         <i-col span="8">
             <i-select v-model="select_current">
-                <i-option v-for="item in request_get" :value="item.value" :key="item.value">{ item.label }</i-option>
+                <i-option v-for="(item,index) in request_get" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
             </i-select>
         </i-col>
     </Row>
@@ -42,10 +50,10 @@
         <i-col span="8"><i-input value="/apijson/head" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_head'">
-        <i-col span="3"><div align="center"><strong>apijson head</strong> request examples</div></i-col>
+        <i-col span="3"><div align="center"><strong>apijson head</strong> request <span class="notice">{request_head.length}</span> examples</div></i-col>
         <i-col span="8">
             <i-select v-model="select_current">
-                <i-option v-for="item in request_head" :value="item.value" :key="item.value">{ item.label }</i-option>
+                <i-option v-for="(item,index) in request_head" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
             </i-select>
         </i-col>
     </Row>
@@ -55,10 +63,10 @@
             <i-col span="8"><i-input value="/apijson/post" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_post'">
-        <i-col span="3"><div align="center"><strong>apijson post</strong> request examples</div></i-col>
+        <i-col span="3"><div align="center"><strong>apijson post</strong> request <span class="notice">{request_post.length}</span> examples</div></i-col>
         <i-col span="8">
             <i-select v-model="select_current">
-                <i-option v-for="item in request_post" :value="item.value" :key="item.value">{ item.label }</i-option>
+                <i-option v-for="(item,index) in request_post" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
             </i-select>
         </i-col>
     </Row>
@@ -68,10 +76,10 @@
         <i-col span="8"><i-input value="/apijson/put" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_put'">
-        <i-col span="3"><div align="center"><strong>apijson put</strong> request examples</div></i-col>
+        <i-col span="3"><div align="center"><strong>apijson put</strong> request <span class="notice">{request_put.length}</span> examples</div></i-col>
         <i-col span="8">
             <i-select v-model="select_current">
-                <i-option v-for="item in request_put" :value="item.value" :key="item.value">{ item.label }</i-option>
+                <i-option v-for="(item,index) in request_put" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
             </i-select>
         </i-col>
     </Row>
@@ -81,10 +89,10 @@
         <i-col span="8"><i-input value="/apijson/delete" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_delete'">
-        <i-col span="3"><div align="center"><strong>apijson delete</strong> request examples</div></i-col>
+        <i-col span="3"><div align="center"><strong>apijson delete</strong> request <span class="notice">{request_delete.length}</span> examples</div></i-col>
         <i-col span="8">
             <i-select v-model="select_current">
-                <i-option v-for="item in request_delete" :value="item.value" :key="item.value">{ item.label }</i-option>
+                <i-option v-for="(item,index) in request_delete" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
             </i-select>
         </i-col>
     </Row>

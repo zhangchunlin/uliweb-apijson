@@ -237,6 +237,7 @@ class ApiJson(object):
                     q = q.order_by(getattr(column,sort_order)())
 
             def _get_info(i):
+                resultd = {}
                 d = i.to_dict()
                 if secret_fields:
                     for k in secret_fields:
@@ -246,7 +247,8 @@ class ApiJson(object):
                     for k in keys:
                         if k not in model_column_set:
                             del d[k]
-                return d
+                resultd[model_name] = d
+                return resultd
             l = [_get_info(i) for i in q]
             self.rdict[key] = l
 
