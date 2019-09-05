@@ -23,9 +23,48 @@
         <tab-pane label="apijson put" name="tab_put"></tab-pane>
         <tab-pane label="apijson delete" name="tab_delete"></tab-pane>
     </tabs>
+    <layout>
+    <sider hide-trigger :style="{height: '80vh', width:'360px', 'min-width': '360px', 'max-width': '380px', overflow: 'auto', background: '#fff'}">
+    <i-menu :active-name="0" @on-select="on_select_get" width="360px" ref='menu_get'>
+        <menu-group title="apijson get examples" v-if="tab_current==='tab_get'">
+            <menu-item  v-for="(item,index) in request_get" :name="index" :key="index">
+                📋 {item.label}
+            </menu-item>
+        </menu-group>
+    </i-menu>
+    <i-menu :active-name="0" @on-select="on_select_head" width="360px">
+        <menu-group title="apijson head examples" v-if="tab_current==='tab_head'">
+            <menu-item  v-for="(item,index) in request_head" :name="index" :key="index">
+                📋 {item.label}
+            </menu-item>
+        </menu-group>
+    </i-menu>
+    <i-menu :active-name="0" @on-select="on_select_post" width="360px">
+        <menu-group title="apijson post examples" v-if="tab_current==='tab_post'">
+            <menu-item  v-for="(item,index) in request_post" :name="index" :key="index">
+                📋 {item.label}
+            </menu-item>
+        </menu-group>
+    </i-menu>
+    <i-menu :active-name="0" @on-select="on_select_put" width="360px">
+        <menu-group title="apijson put examples" v-if="tab_current==='tab_put'">
+            <menu-item  v-for="(item,index) in request_put" :name="index" :key="index">
+                📋 {item.label}
+            </menu-item>
+        </menu-group>
+    </i-menu>
+    <i-menu :active-name="0" @on-select="on_select_delete" width="360px">
+        <menu-group title="apijson delete examples" v-if="tab_current==='tab_delete'">
+            <menu-item  v-for="(item,index) in request_delete" :name="index" :key="index">
+                📋 {item.label}
+            </menu-item>
+        </menu-group>
+    </i-menu>
+    </sider>
+    <i-content :style="{padding: '24px', minHeight: '280px', background: '#fff'}">
     <Row>
         <i-col span="3"><div align="center">login user</div></i-col>
-        <i-col span="8"><i-input value="{{=user_info}}" readonly/></i-col>
+        <i-col span="18"><i-input value="{{=user_info}}" readonly/></i-col>
         {{if request.user:}}
         <i-col span="1"><div align="center"><i-button type="warning" size="large" @click="logout">Logout</i-button></div></i-col>
         {{else:}}
@@ -33,79 +72,61 @@
         {{pass}}
     </Row>
     <Row v-if="tab_current==='tab_get'">
-            <i-col span="3"><div align="center">HTTP POST URL</div></i-col>
-            <i-col span="8"><i-input value="/apijson/get" readonly/></i-col>
+        <i-col span="3"><div align="center">HTTP POST URL</div></i-col>
+        <i-col span="18"><i-input value="/apijson/get" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_get'">
-        <i-col span="3"><div align="center"><strong>apijson get</strong> request <span class="notice">{request_get.length}</span> examples</div></i-col>
-        <i-col span="8">
-            <i-select v-model="select_current">
-                <i-option v-for="(item,index) in request_get" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
-            </i-select>
-        </i-col>
+        <i-col span="3"><div align="center">example name</div></i-col>
+        <i-col span="18"><strong><i-input :value="request_get[cmenu_get].label" readonly/></strong></i-col>
     </Row>
 
     <Row v-if="tab_current==='tab_head'">
         <i-col span="3"><div align="center">HTTP HEAD URL</div></i-col>
-        <i-col span="8"><i-input value="/apijson/head" readonly/></i-col>
+        <i-col span="18"><i-input value="/apijson/head" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_head'">
-        <i-col span="3"><div align="center"><strong>apijson head</strong> request <span class="notice">{request_head.length}</span> examples</div></i-col>
-        <i-col span="8">
-            <i-select v-model="select_current">
-                <i-option v-for="(item,index) in request_head" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
-            </i-select>
-        </i-col>
+        <i-col span="3"><div align="center">example name</div></i-col>
+        <i-col span="18"><strong><i-input :value="request_head[cmenu_head].label" readonly/></strong></i-col>
     </Row>
 
     <Row v-if="tab_current==='tab_post'">
-            <i-col span="3"><div align="center">POST URL</div></i-col>
-            <i-col span="8"><i-input value="/apijson/post" readonly/></i-col>
+        <i-col span="3"><div align="center">POST URL</div></i-col>
+        <i-col span="18"><i-input value="/apijson/post" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_post'">
-        <i-col span="3"><div align="center"><strong>apijson post</strong> request <span class="notice">{request_post.length}</span> examples</div></i-col>
-        <i-col span="8">
-            <i-select v-model="select_current">
-                <i-option v-for="(item,index) in request_post" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
-            </i-select>
-        </i-col>
+        <i-col span="3"><div align="center">example name</div></i-col>
+        <i-col span="18"><strong><i-input :value="request_post[cmenu_post].label" readonly/></strong></i-col>
     </Row>
 
     <Row v-if="tab_current==='tab_put'">
         <i-col span="3"><div align="center">PUT URL</div></i-col>
-        <i-col span="8"><i-input value="/apijson/put" readonly/></i-col>
+        <i-col span="18"><i-input value="/apijson/put" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_put'">
-        <i-col span="3"><div align="center"><strong>apijson put</strong> request <span class="notice">{request_put.length}</span> examples</div></i-col>
-        <i-col span="8">
-            <i-select v-model="select_current">
-                <i-option v-for="(item,index) in request_put" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
-            </i-select>
-        </i-col>
+        <i-col span="3"><div align="center">example name</div></i-col>
+        <i-col span="18"><strong><i-input :value="request_put[cmenu_put].label" readonly/></strong></i-col>
     </Row>
 
     <Row v-if="tab_current==='tab_delete'">
         <i-col span="3"><div align="center">DELETE URL</div></i-col>
-        <i-col span="8"><i-input value="/apijson/delete" readonly/></i-col>
+        <i-col span="18"><i-input value="/apijson/delete" readonly/></i-col>
     </Row>
     <Row v-if="tab_current==='tab_delete'">
-        <i-col span="3"><div align="center"><strong>apijson delete</strong> request <span class="notice">{request_delete.length}</span> examples</div></i-col>
-        <i-col span="8">
-            <i-select v-model="select_current">
-                <i-option v-for="(item,index) in request_delete" :value="item.value" :key="item.value">{index+1}. {item.label}</i-option>
-            </i-select>
-        </i-col>
+        <i-col span="3"><div align="center">example name</div></i-col>
+        <i-col span="18"><strong><i-input :value="request_delete[cmenu_delete].label" readonly/></strong></i-col>
     </Row>
 
     <Row>
         <i-col span="3"><div align="center">request data</div></i-col>
-        <i-col span="8"><i-input v-model="request_data" type="textarea" :autosize="{minRows: 3,maxRows: 15}" placeholder="request data" /></i-col>
+        <i-col span="18"><i-input v-model="request_data" type="textarea" :autosize="{minRows: 3,maxRows: 15}" placeholder="request data" /></i-col>
         <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="post_request_data" v-bind:disabled="!can_post">Post</i-button></div></i-col>
     </Row>
     <Row>
         <i-col span="3"><div align="center">response data</div></i-col>
-        <i-col span="8"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
+        <i-col span="18"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
     </Row>
+    </i-content>
+    </layout>
 </div>
 </div>
 <script>
@@ -119,7 +140,13 @@ var vm = new Vue({
         request_put : {{<<request_put_json}},
         request_delete : {{<<request_delete_json}},
         request_data : "",
-        select_current : "",
+
+        cmenu_get : 0,
+        cmenu_head : 0,
+        cmenu_post : 0,
+        cmenu_put : 0,
+        cmenu_delete : 0,
+        
         can_post : true,
         response_data : "",
         tab_current : "tab_get",
@@ -134,7 +161,36 @@ var vm = new Vue({
     methods: {
         init_default: function(){
             vm.request_data = vm.request_get[0].value
-            vm.select_current = vm.request_data
+        },
+        on_select_get: function(name){
+            vm.cmenu_get = parseInt(name)
+            vm.request_data = vm.request_get[vm.cmenu_get].value
+            vm.response_data = ""
+            vm.can_post = true
+        },
+        on_select_head: function(name){
+            vm.cmenu_head = parseInt(name)
+            vm.request_data = vm.request_head[vm.cmenu_head].value
+            vm.response_data = ""
+            vm.can_post = true
+        },
+        on_select_post: function(name){
+            vm.cmenu_post = parseInt(name)
+            vm.request_data = vm.request_post[vm.cmenu_post].value
+            vm.response_data = ""
+            vm.can_post = true
+        },
+        on_select_put: function(name){
+            vm.cmenu_put = parseInt(name)
+            vm.request_data = vm.request_put[vm.cmenu_put].value
+            vm.response_data = ""
+            vm.can_post = true
+        },
+        on_select_delete: function(name){
+            vm.cmenu_delete = parseInt(name)
+            vm.request_data = vm.request_delete[vm.cmenu_delete].value
+            vm.response_data = ""
+            vm.can_post = true
         },
         post_request_data: function(){
             $.ajax({
@@ -171,16 +227,7 @@ var vm = new Vue({
             else if (n=="tab_delete") {
                 vm.request_data = vm.request_delete[0].value
             }
-            vm.select_current = vm.request_data
             vm.response_data = ""
-        },
-        select_current : function(n,o){
-            if (n!=null && n!="" && n!==vm.request_data) {
-                vm.request_data = n
-            }
-            else {
-                vm.select_current = vm.request_data
-            }
         }
     }
 })
