@@ -55,6 +55,8 @@ class ApiJson(object):
                     rsp = self._get_one(key)
                 if rsp: return rsp
             self._apply_vars()
+        except UliwebError as e:
+            return json({"code":400,"msg":str(e)})
         except Exception as e:
             err = "exception when handling 'apijson get': %s"%(e)
             log.error(err)
@@ -229,6 +231,20 @@ class ApiJson(object):
                 return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
 
         model_expr = model_param.get("@expr")
+
+        #update reference
+        ref_fields = []
+        refs = {}
+        for n in model_param:
+            if n[-1]=="@":
+                ref_fields.append(n)
+                col_name = n[:-1]
+                path = model_param[n]
+                refs[col_name] = self._ref_get(path)
+        if ref_fields:
+            for i in ref_fields:
+                del model_param[i]
+            model_param.update(refs)
 
         if model_expr:
             c = self._expr(model,model_param,model_expr)

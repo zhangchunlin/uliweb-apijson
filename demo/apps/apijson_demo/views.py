@@ -125,6 +125,17 @@ def index():
 }''',
         },
         {
+            "label":"Array query: association query one to many",
+            "value":'''{
+    "moment": {},
+    "[]": {
+        "comment": {
+            "moment_id@": "moment/id"
+        }
+    }
+}''',
+        },
+        {
             "label":"Array query: association query",
             "value":'''{
   "[]": {
