@@ -3,6 +3,7 @@ from uliweb import expose, functions, models, UliwebError
 from uliweb.orm import ModelNotFound
 from sqlalchemy.sql import and_, or_, not_
 from json import loads
+from collections import OrderedDict
 import logging
 import traceback
 
@@ -18,7 +19,9 @@ class ApiJson(object):
         self.vars = {}
 
         try:
-            self.request_data = loads(request.data)
+            #https://blog.csdn.net/yockie/article/details/44065885
+            #keep order when parse json, because the order matters for association query
+            self.request_data = loads(request.data, object_pairs_hook=OrderedDict)
         except Exception as e:
             log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
             return json({"code":400,"msg":"not json data in the request"})
@@ -30,6 +33,15 @@ class ApiJson(object):
                 v = self.vars.get(k)
                 if v:
                     self.rdict[key[:-1]] = v
+
+    def _ref_get(self,path):
+        if path[0]=="/":
+            #TODO: relative path
+            pass
+        else:
+            #absolute path
+            m,c = path.split("/")
+            return self.rdict.get(m,{}).get(c)
 
     def get(self):
         try:
@@ -93,6 +105,19 @@ class ApiJson(object):
 
         params = self.request_data[key]
         if isinstance(params,dict):
+            #update reference,example: {"id@": "moment/user_id"} -> {"id": 2}
+            ref_fields = []
+            refs = {}
+            for n in params:
+                if n[-1]=="@":
+                    ref_fields.append(n)
+                    col_name = n[:-1]
+                    path = params[n]
+                    refs[col_name] = self._ref_get(path)
+            for i in ref_fields:
+                del params[i]
+            params.update(refs)
+            
             for n in params:
                 if n[0]=="@":
                     if n=="@column":

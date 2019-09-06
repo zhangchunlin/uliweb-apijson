@@ -30,24 +30,34 @@ def index():
         {
             "label":"Single record query: @column",
             "value":'''{
-   "user":{
+    "user":{
        "@column": "id,username,email",
        "@role":"OWNER"
-   }
+    }
+}''',
+        },
+        {
+            "label":"Single record query: association query",
+            "value":'''{
+    "moment":{},
+    "user":{
+       "@column": "id,username,email",
+       "id@": "moment/user_id"
+    }
 }''',
         },
         {
             "label":"Array query: user",
             "value":'''{
-  "[]":{
-    "@count":2,
-    "@page":0,
-    "user":{
-        "@column":"id,username,nickname,email",
-        "@order":"id-",
-        "@role":"ADMIN"
+     "[]":{
+        "@count":2,
+        "@page":0,
+        "user":{
+            "@column":"id,username,nickname,email",
+            "@order":"id-",
+            "@role":"ADMIN"
+        }
     }
-  }
 }''',
         },
         {
@@ -110,6 +120,21 @@ def index():
         "username$":"%b%",
         "nickname$":"%Admin%",
         "email$":"%local%"
+    }
+  }
+}''',
+        },
+        {
+            "label":"Array query: association query",
+            "value":'''{
+  "[]": {
+    "moment": {
+      "@column": "id,date,user_id",
+      "id": 3
+    },
+    "user": {
+      "id@": "/moment/user_id",
+      "@column": "id,username"
     }
   }
 }''',
