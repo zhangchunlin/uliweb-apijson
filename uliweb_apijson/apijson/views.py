@@ -6,6 +6,7 @@ from json import loads
 from collections import OrderedDict
 import logging
 import traceback
+from . import ApiJsonModelQuery
 
 log = logging.getLogger('apijson')
 
@@ -34,14 +35,37 @@ class ApiJson(object):
                 if v:
                     self.rdict[key[:-1]] = v
 
-    def _ref_get(self,path):
+    def _ref_get(self,path,context={}):
         if path[0]=="/":
-            #TODO: relative path
-            pass
+            #relative path
+            c = context
+            for i in path.split("/"):
+                if i:
+                    if isinstance(c,dict):
+                        c = c.get(i)
+                    elif isinstance(c,list):
+                        try:
+                            c = c[int(i)]
+                        except Exception as e:
+                            raise UliwebError("bad path item '%s' in path '%s', error: %s"%(i,path,e))
+                    else:
+                        raise UliwebError("cannot get '%s' from '%s'"%(i,c))
+            return c
         else:
             #absolute path
-            m,c = path.split("/")
-            return self.rdict.get(m,{}).get(c)
+            c = self.rdict
+            for i in path.split("/"):
+                if i:
+                    if isinstance(c,dict):
+                        c = c.get(i)
+                    elif isinstance(c,list):
+                        try:
+                            c = c[int(i)]
+                        except Exception as e:
+                            raise UliwebError("bad path item '%s' in path '%s', error: %s"%(i,path,e))
+                    else:
+                        raise UliwebError("bad path item '%s' in path '%s'"%(i,path))
+            return c
 
     def get(self):
         try:
@@ -144,154 +168,17 @@ class ApiJson(object):
 
     def _get_array(self,key):
         params = self.request_data[key]
-        model_name = None
-        model_param = None
-        model_column_set = None
 
-        query_count = params.get("@count")
-        if query_count:
-            try:
-                query_count = int(query_count)
-            except ValueError as e:
-                log.error("bad param in '%s': '%s'"%(n,params))
-                return json({"code":400,"msg":"@count should be an int, now '%s'"%(params[n])})
-
-        query_page = params.get("@page")
-        if query_page:
-            #@page begin from 0
-            try:
-                query_page = int(query_page)
-            except ValueError as e:
-                log.error("bad param in '%s': '%s'"%(n,params))
-                return json({"code":400,"msg":"@page should be an int, now '%s'"%(params[n])})
-            if query_page<0:
-                return json({"code":400,"msg":"page should >0, now is '%s'"%(query_page)})
-
-        #https://github.com/TommyLemon/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
-        query_type = params.get("@query",0)
-        if query_type not in [0,1,2]:
-            return json({"code":400,"msg":"bad param 'query': %s"%(query_type)})
-
-        for n in params:
-            if n[0]!="@":
-                # TODO: support join in the future, now only support 1 model
-                model_name = n
-                break
-
-        if not model_name:
-            return json({"code":400,"msg":"no model found in array query"})
-
-        #model settings
-        model_setting = settings.APIJSON_MODELS.get(model_name,{})
-        secret_fields = model_setting.get("secret_fields")
-
-        #model params
-        #column
-        model_param = params[n]
-        model_column = model_param.get("@column")
-        if model_column:
-            model_column_set = set(model_column.split(","))
-        try:
-            model = getattr(models,model_name)
-        except ModelNotFound as e:
-            log.error("try to find model '%s' but not found: '%s'"%(model_name,e))
-            return json({"code":400,"msg":"model '%s' not found"%(model_name)})
-        #order
-        model_order = model_param.get("@order")
-
-        q = model.all()
-
-        GET = model_setting.get("GET")
-        if not GET:
-            return json({"code":400,"msg":"'%s' not accessible by apijson"%(model_name)})
-
-        roles = GET.get("roles")
-        params_role = model_param.get("@role")
-        permission_check_ok = False
-        if not params_role:
-            if request.user:
-                params_role = "LOGIN"
-            else:
-                params_role = "UNKNOWN"
-        if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
-        if params_role == "UNKNOWN":
-            permission_check_ok = True
-        elif functions.has_role(request.user,params_role):
-            permission_check_ok = True
-        else:
-            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
-
-        if not permission_check_ok:
-            return json({"code":400,"msg":"no permission"})
-
-        if params_role == "OWNER":
-            owner_filtered,q = self._filter_owner(model,model_setting,q)
-            if not owner_filtered:
-                return  json({"code":400,"msg":"'%s' cannot filter with owner"%(model_name)})
-
-        model_expr = model_param.get("@expr")
-
-        #update reference
-        ref_fields = []
-        refs = {}
-        for n in model_param:
-            if n[-1]=="@":
-                ref_fields.append(n)
-                col_name = n[:-1]
-                path = model_param[n]
-                refs[col_name] = self._ref_get(path)
-        if ref_fields:
-            for i in ref_fields:
-                del model_param[i]
-            model_param.update(refs)
-
-        if model_expr:
-            c = self._expr(model,model_param,model_expr)
-            q = q.filter(c)
-        else:
-            for n in model_param:
-                if n[0]!="@":
-                    c = self._get_filter_condition(model,model_param,n)
-                    q = q.filter(c)
-
-        if query_type in [1,2]:
-            self.vars["/%s/total"%(key)] = q.count()
-
-        if query_type in [0,2]:
-            if query_count:
-                if query_page:
-                    q = q.offset(query_page*query_count)
-                q = q.limit(query_count)
-            if model_order:
-                for k in model_order.split(","):
-                    if k[-1] == "+":
-                        sort_key = k[:-1]
-                        sort_order = "asc"
-                    elif k[-1] == "-":
-                        sort_key = k[:-1]
-                        sort_order = "desc"
-                    else:
-                        sort_key = k
-                        sort_order = "asc"
-                    column = getattr(model.c,sort_key)
-                    q = q.order_by(getattr(column,sort_order)())
-
-            def _get_info(i):
-                resultd = {}
-                d = i.to_dict()
-                if secret_fields:
-                    for k in secret_fields:
-                        del d[k]
-                if model_column_set:
-                    keys = list(d.keys())
-                    for k in keys:
-                        if k not in model_column_set:
-                            del d[k]
-                resultd[model_name] = d
-                return resultd
-            l = [_get_info(i) for i in q]
-            self.rdict[key] = l
+        names = [n for n in params if n[0]!='@']
+        if names:
+            #main model
+            n = names[0]
+            mquery = ApiJsonModelQuery(n,params[n],self,key)
+            mquery.query_array()
+            #additional model
+            for n in names[1:]:
+                mquery = ApiJsonModelQuery(n,params[n],self,key)
+                mquery.associated_query_array()
 
     def _filter_owner(self,model,model_setting,q):
         owner_filtered = False
