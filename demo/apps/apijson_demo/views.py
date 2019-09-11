@@ -11,15 +11,16 @@ def index():
 
     request_get = [
         {
-            "label":"Single record query: self user",
+            "label":"Single query: self user",
             "value":'''{
    "user":{
         "@role":"OWNER"
    }
 }''',
         },
+
         {
-            "label":"Single record query: with id as parameter",
+            "label":"Single query: with id as parameter",
             "value":'''{
    "user":{
         "id":2,
@@ -27,29 +28,32 @@ def index():
    }
 }''',
         },
+
         {
-            "label":"Single record query: @column",
+            "label":"Single query: @column",
             "value":'''{
-   "user":{
+    "user":{
        "@column": "id,username,email",
        "@role":"OWNER"
-   }
+    }
 }''',
         },
+
         {
             "label":"Array query: user",
             "value":'''{
-  "[]":{
-    "@count":2,
-    "@page":0,
-    "user":{
-        "@column":"id,username,nickname,email",
-        "@order":"id-",
-        "@role":"ADMIN"
+     "[]":{
+        "@count":2,
+        "@page":0,
+        "user":{
+            "@column":"id,username,nickname,email",
+            "@order":"id-",
+            "@role":"ADMIN"
+        }
     }
-  }
 }''',
         },
+
         {
             "label":"Array query: moment",
             "value":'''{
@@ -64,6 +68,7 @@ def index():
     "total@":"/moment[]/total"
 }''',
         },
+
         {
             "label":"Array query: like",
             "value":'''{
@@ -79,6 +84,7 @@ def index():
   }
 }''',
         },
+
         {
             "label":"Array query: simple @expr",
             "value":'''{
@@ -96,6 +102,7 @@ def index():
   }
 }''',
         },
+
         {
             "label":"Array query: complex @expr",
             "value":'''{
@@ -110,6 +117,45 @@ def index():
         "username$":"%b%",
         "nickname$":"%Admin%",
         "email$":"%local%"
+    }
+  }
+}''',
+        },
+
+        {
+            "label":"Association query: Two tables, one to one",
+            "value":'''{
+    "moment":{},
+    "user":{
+       "@column": "id,username,email",
+       "id@": "moment/user_id"
+    }
+}''',
+        },
+
+        {
+            "label":"Association query: Two tables, one to many",
+            "value":'''{
+    "moment": {},
+    "[]": {
+        "comment": {
+            "moment_id@": "moment/id",
+            "@order":"date-"
+        }
+    }
+}''',
+        },
+
+        {
+            "label":"Association query: Two tables in array",
+            "value":'''{
+  "[]": {
+    "moment": {
+      "@column": "id,date,user_id"
+    },
+    "user": {
+      "id@": "/moment/user_id",
+      "@column": "id,username"
     }
   }
 }''',
