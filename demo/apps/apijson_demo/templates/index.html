@@ -28,35 +28,35 @@
     <i-menu :active-name="0" @on-select="on_select_get" width="360px" ref='menu_get'>
         <menu-group title="apijson get examples" v-if="tab_current==='tab_get'">
             <menu-item  v-for="(item,index) in request_get" :name="index" :key="index">
-                📋 {item.label}
+                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
             </menu-item>
         </menu-group>
     </i-menu>
     <i-menu :active-name="0" @on-select="on_select_head" width="360px">
         <menu-group title="apijson head examples" v-if="tab_current==='tab_head'">
             <menu-item  v-for="(item,index) in request_head" :name="index" :key="index">
-                📋 {item.label}
+                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
             </menu-item>
         </menu-group>
     </i-menu>
     <i-menu :active-name="0" @on-select="on_select_post" width="360px">
         <menu-group title="apijson post examples" v-if="tab_current==='tab_post'">
             <menu-item  v-for="(item,index) in request_post" :name="index" :key="index">
-                📋 {item.label}
+                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
             </menu-item>
         </menu-group>
     </i-menu>
     <i-menu :active-name="0" @on-select="on_select_put" width="360px">
         <menu-group title="apijson put examples" v-if="tab_current==='tab_put'">
             <menu-item  v-for="(item,index) in request_put" :name="index" :key="index">
-                📋 {item.label}
+                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
             </menu-item>
         </menu-group>
     </i-menu>
     <i-menu :active-name="0" @on-select="on_select_delete" width="360px">
         <menu-group title="apijson delete examples" v-if="tab_current==='tab_delete'">
             <menu-item  v-for="(item,index) in request_delete" :name="index" :key="index">
-                📋 {item.label}
+                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
             </menu-item>
         </menu-group>
     </i-menu>
