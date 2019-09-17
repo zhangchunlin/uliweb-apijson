@@ -1,0 +1,25 @@
+# Changelog
+
+- 0.2.0(2019-09-17)
+  - setup: add fix utf8 for reading file
+  - **fix json response structure to be same as original apijson api (java)**
+  - demo: use menu to display example list
+  - **add association query support**
+- 0.1.3(2019-08-06)
+  - demo: use admlte style layout
+  - apijson-table: add sort support
+  - apply_vars ->  _apply_vars to avoid mapping to view; don't show db exception detail for security
+  - apijson-viewedit: remove custom_tcolumns_render_generator in apijson-viewedit; add custom_viewedit_componet block
+- 0.1.2 (2019-05-27)
+  - **add @expr support in apijson_get array**
+  - more strict check with model name in get action;  fix request_tag should get with tag not with model name
+  - add vue component apijson-viewedit
+  - apijson post/put/delete should get model name from request_tag setting; add NECESSARY support in _put_one
+  - add functions.get_apijson_table
+  - apijson-table: add custom_tcolumns_render_generator prop; deault component is input in add modal;  add Notice top config
+- 0.1.1 (2019-05-07)
+  - more strict check to tag_POST; support DISALLOW in apijson_put
+  - fix DISALLOW and NECESSARY get wrongly problem
+  - vue component apijson-table: change hook function names; change "type" to "component" in fields config;  override modal footer, only cancel button; add checkbox render; add set deleted support
+- 0.1.0 (2019-04-02)
+  - First workable release
