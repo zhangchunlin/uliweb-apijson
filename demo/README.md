@@ -21,4 +21,6 @@ uliweb runserver
 
 Then you can access http://localhost:8000 to try demo.
 
+Users in demo for test: **admin**/**usera**/**userb**/**userc** , password: **123**
+
 ![](doc/imgs/demo_screenshot.png)
