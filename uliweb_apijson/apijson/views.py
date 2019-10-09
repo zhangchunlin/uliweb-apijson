@@ -1,6 +1,7 @@
 #coding=utf-8
 from uliweb import expose, functions, models, UliwebError
 from uliweb.orm import ModelNotFound
+from uliweb.utils._compat import string_types
 from sqlalchemy.sql import and_, or_, not_
 from json import loads
 from collections import OrderedDict
@@ -224,7 +225,7 @@ class ApiJson(object):
                 return self._expr(model,model_param,model_expr=item)
             else:
                 raise UliwebError("item can be array only in @expr: '%s'"%(item))
-        if not isinstance(item,str):
+        if not isinstance(item,string_types):
             raise UliwebError("item should be array or string: '%s'"%(item))
         n = item
         if n[0]=="@":
