@@ -2,7 +2,9 @@
 
 from uliweb import settings, models, request, functions, UliwebError
 from uliweb.orm import ModelNotFound
+import logging
 
+log = logging.getLogger('apijson')
 
 def get_apijson_tables(role="UNKNOWN"):
     from uliweb import settings
