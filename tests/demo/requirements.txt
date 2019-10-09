@@ -1,0 +1,4 @@
+six
+SQLAlchemy
+uliweb3
+uliweb-apijson
