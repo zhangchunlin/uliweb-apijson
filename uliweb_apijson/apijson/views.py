@@ -114,6 +114,9 @@ class ApiJson(object):
                 params_role = "LOGIN"
             else:
                 params_role = "UNKNOWN"
+        elif params_role != "UNKNOWN":
+            if not hasattr(request,"user"):
+                return json({"code":400,"msg":"no user for role '%s'"%(params_role)})
         if params_role not in roles:
             return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
         if params_role == "UNKNOWN":
@@ -121,7 +124,7 @@ class ApiJson(object):
         elif functions.has_role(request.user,params_role):
             permission_check_ok = True
         else:
-            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
+            return json({"code":400,"msg":"user doesn't has role '%s'"%(params_role)})
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
