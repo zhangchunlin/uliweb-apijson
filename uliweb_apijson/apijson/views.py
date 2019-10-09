@@ -110,7 +110,7 @@ class ApiJson(object):
         roles = GET.get("roles")
         permission_check_ok = False
         if not params_role:
-            if request.user:
+            if hasattr(request,"user"):
                 params_role = "LOGIN"
             else:
                 params_role = "UNKNOWN"
