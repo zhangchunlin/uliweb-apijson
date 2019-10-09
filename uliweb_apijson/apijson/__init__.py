@@ -1,6 +1,6 @@
 #coding=utf-8
 
-from uliweb import settings, models, request, functions
+from uliweb import settings, models, request, functions, UliwebError
 from uliweb.orm import ModelNotFound
 
 
@@ -82,7 +82,7 @@ class ApiJsonModelQuery(object):
     def _check_GET_permission(self):
         GET = self.setting.get("GET")
         if not GET:
-            raise UliwebError("'%s' not accessible by apijson"%(name))
+            raise UliwebError("'%s' not accessible by apijson"%(self.name))
     
         roles = GET.get("roles")
         params_role = self.params.get("@role")
@@ -93,7 +93,7 @@ class ApiJsonModelQuery(object):
             else:
                 params_role = "UNKNOWN"
         if params_role not in roles:
-            raise UliwebError("'%s' not accessible by role '%s'"%(model_name,params_role))
+            raise UliwebError("'%s' not accessible by role '%s'"%(self.name,params_role))
         if params_role == "UNKNOWN":
             self.permission_check_ok = True
         elif functions.has_role(request.user,params_role):
