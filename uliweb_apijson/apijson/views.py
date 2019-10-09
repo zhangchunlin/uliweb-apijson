@@ -36,7 +36,9 @@ class ApiJson(object):
                 if v:
                     self.rdict[key[:-1]] = v
 
-    def _ref_get(self,path,context={}):
+    def _ref_get(self,path,context=None):
+        if context==None:
+            context = {}
         if path[0]=="/":
             #relative path
             c = context
@@ -143,7 +145,7 @@ class ApiJson(object):
                     ref_fields.append(n)
                     col_name = n[:-1]
                     path = params[n]
-                    refs[col_name] = self._ref_get(path)
+                    refs[col_name] = self._ref_get(path,context=self.rdict)
             for i in ref_fields:
                 del params[i]
             params.update(refs)
