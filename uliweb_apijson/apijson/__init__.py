@@ -153,7 +153,7 @@ class ApiJsonModelQuery(object):
                 q = q.filter(getattr(model.c,user_id_field)==request.user.id)
                 owner_filtered = True
         if not owner_filtered:
-            raise UliwebError("'%s' cannot filter with owner"%(model_name))
+            raise UliwebError("'%s' cannot filter with owner"%(self.name))
         return q
 
     def _get_array_q(self,params):

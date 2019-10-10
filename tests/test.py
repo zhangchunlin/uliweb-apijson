@@ -371,6 +371,49 @@ def test_apijson_get():
     >>> print(d)
     {'code': 400, 'msg': "page should >0, but get '-2'"}
 
+    >>> #query array with @count/@page/@query, @query bad param
+    >>> data ='''{
+    ... "[]":{
+    ...         "@count":2,
+    ...         "@page":1,
+    ...         "@query":3,
+    ...         "user": {
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "bad param 'query': 3"}
+
+    >>> #query array with @count/@page/@query, @query = 0
+    >>> data ='''{
+    ... "[]":{
+    ...         "@count":2,
+    ...         "@page":1,
+    ...         "@query":0,
+    ...         "user": {
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'is_superuser': False, 'last_login': None, 'date_join': '2018-03-03 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'is_superuser': False, 'last_login': None, 'date_join': '2018-04-04 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 4}}]}
+
+    >>> #query array with OWNER but cannot filter with OWNER
+    >>> data ='''{
+    ...    "[]":{
+    ...         "publicnotice": {
+    ...             "@role":"OWNER"
+    ...         }
+    ...    }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'publicnotice' cannot filter with owner"}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},
