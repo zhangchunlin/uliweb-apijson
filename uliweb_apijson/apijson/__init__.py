@@ -231,7 +231,10 @@ class ApiJsonModelQuery(object):
                     else:
                         sort_key = k
                         sort_order = "asc"
-                    column = getattr(self.model.c,sort_key)
+                    try:
+                        column = getattr(self.model.c,sort_key)
+                    except AttributeError as e:
+                        raise UliwebError("'%s' doesn't have column '%s'"%(self.name,sort_key))
                     q = q.order_by(getattr(column,sort_order)())
             l = [self._get_info(i,True) for i in q]
             self.parent.rdict[self.key] = l

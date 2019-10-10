@@ -453,6 +453,120 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}]}
 
+    >>> #query array with some filter column
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "username":"admin"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'id': 1}}]}
+
+    >>> #query array with reference, @query = 1
+    >>> data ='''{
+    ...     "[]":{
+    ...         "@count":2,
+    ...         "@page":0,
+    ...         "@query":1,
+    ...         "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN"
+    ...         }
+    ...     },
+    ...     "total@":"/[]/total"
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'total': 4}
+
+    >>> #query array with reference, @query = 2
+    >>> data ='''{
+    ...     "[]":{
+    ...         "@count":2,
+    ...         "@page":0,
+    ...         "@query":2,
+    ...         "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN"
+    ...         }
+    ...     },
+    ...     "total@":"/[]/total"
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'id': 4}}, {'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'id': 3}}], 'total': 4}
+
+    >>> #query array with @order +
+    >>> data ='''{
+    ...     "[]":{
+    ...         "@count":2,
+    ...         "@page":0,
+    ...         "@query":2,
+    ...         "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id+",
+    ...             "@role":"ADMIN"
+    ...         }
+    ...     },
+    ...     "total@":"/[]/total"
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'email': 'usera@localhost', 'id': 2}}], 'total': 4}
+
+    >>> #query array with @order having a non existing column
+    >>> data ='''{
+    ...     "[]":{
+    ...         "@count":2,
+    ...         "@page":0,
+    ...         "@query":2,
+    ...         "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"nonexist+",
+    ...             "@role":"ADMIN"
+    ...         }
+    ...     },
+    ...     "total@":"/[]/total"
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'user' doesn't have column 'nonexist'"}
+
+    >>> #query array with @expr
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["username$","|","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'id': 4}}, {'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'id': 3}}]}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},
