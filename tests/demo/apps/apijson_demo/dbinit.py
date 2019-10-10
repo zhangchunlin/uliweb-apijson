@@ -84,6 +84,13 @@ moment_list = [
 
 comment_list = [
     {
+        "username" : "admin",
+        "to_username" : "userb",
+        "moment_id" : 1,
+        "date" : "2018-11-1",
+        "content" : "comment from admin",
+    },
+    {
         "username" : "usera",
         "to_username" : "userb",
         "moment_id" : 1,

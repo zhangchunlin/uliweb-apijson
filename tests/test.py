@@ -157,6 +157,18 @@ def test_apijson_get():
     >>> print(d)
     {'code': 400, 'msg': "'publicnotice' cannot filter with owner"}
 
+    >>> #query one with OWNER which will use owner_condition() to filter
+    >>> data ='''{
+    ... "moment":{
+    ...         "@role":"OWNER"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    Moment: owner_condition
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}
+
     >>> #query one with UNKNOWN
     >>> data ='''{
     ... "publicnotice":{
@@ -426,6 +438,20 @@ def test_apijson_get():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'comment': {'user_id': 1, 'to_id': 3, 'moment_id': 1, 'date': '2018-11-01 00:00:00', 'content': 'comment from admin', 'id': 1}}]}
+
+    >>> #query array with OWNER, the model using owner_condition
+    >>> data ='''{
+    ...    "[]":{
+    ...         "moment": {
+    ...             "@role":"OWNER"
+    ...         }
+    ...    }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    Moment: owner_condition
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}]}
 
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{

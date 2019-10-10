@@ -189,7 +189,7 @@ class ApiJson(object):
     def _filter_owner(self,model,model_setting,q):
         owner_filtered = False
         if hasattr(model,"owner_condition"):
-            q = q.filter(model.owner_condition())
+            q = q.filter(model.owner_condition(request.user.id))
             owner_filtered = True
         if not owner_filtered:
             user_id_field = model_setting.get("user_id_field")

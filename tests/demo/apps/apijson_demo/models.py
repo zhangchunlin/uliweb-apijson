@@ -16,6 +16,11 @@ class Moment(Model):
     content = Field(TEXT)
     picture_list = Field(JSON, default=[])
 
+    @classmethod
+    def owner_condition(cls,user_id):
+        print("Moment: owner_condition")
+        return cls.c.user_id==user_id
+
 class Comment(Model):
     user_id = Reference("user")
     to_id = Reference("user")
