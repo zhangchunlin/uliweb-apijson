@@ -145,12 +145,12 @@ class ApiJsonModelQuery(object):
     def _filter_owner(self,q):
         owner_filtered = False
         if hasattr(self.model,"owner_condition"):
-            q = q.filter(model.owner_condition())
+            q = q.filter(self.model.owner_condition(request.user.id))
             owner_filtered = True
         if not owner_filtered:
             user_id_field = self.setting.get("user_id_field")
             if user_id_field:
-                q = q.filter(getattr(model.c,user_id_field)==request.user.id)
+                q = q.filter(getattr(self.model.c,user_id_field)==request.user.id)
                 owner_filtered = True
         if not owner_filtered:
             raise UliwebError("'%s' cannot filter with owner"%(self.name))

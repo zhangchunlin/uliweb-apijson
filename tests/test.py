@@ -414,6 +414,19 @@ def test_apijson_get():
     >>> print(d)
     {'code': 400, 'msg': "'publicnotice' cannot filter with owner"}
 
+    >>> #query array with OWNER
+    >>> data ='''{
+    ...    "[]":{
+    ...         "comment": {
+    ...             "@role":"OWNER"
+    ...         }
+    ...    }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'comment': {'user_id': 1, 'to_id': 3, 'moment_id': 1, 'date': '2018-11-01 00:00:00', 'content': 'comment from admin', 'id': 1}}]}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},
