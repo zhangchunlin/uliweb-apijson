@@ -90,10 +90,13 @@ class ApiJsonModelQuery(object):
         params_role = self.params.get("@role")
         
         if not params_role:
-            if request.user:
+            if hasattr(request,"user"):
                 params_role = "LOGIN"
             else:
                 params_role = "UNKNOWN"
+        elif params_role != "UNKNOWN":
+            if not hasattr(request,"user"):
+                raise UliwebError("no login user for role '%s'"%(params_role))
         if params_role not in roles:
             raise UliwebError("'%s' not accessible by role '%s'"%(self.name,params_role))
         if params_role == "UNKNOWN":

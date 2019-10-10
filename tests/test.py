@@ -66,6 +66,29 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', 'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'is_superuser': True, 'id': 1}}
 
+    >>> #query with @column which have a non existing column name
+    >>> data ='''{
+    ... "user":{
+    ...         "@role":"OWNER",
+    ...         "@column": "id,username,email,nickname,is_superuser,nonexisting"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'is_superuser': True, 'id': 1}}
+
+    >>> #query with a non existing column property
+    >>> data ='''{
+    ... "user":{
+    ...         "nonexisting": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'user' have no attribute 'nonexisting'"}
+
     >>> #query one with a non existing model
     >>> data ='''{
     ... "nonexist":{
@@ -120,7 +143,7 @@ def test_apijson_get():
     >>> r = handler.post('/apijson/get', data=data, middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': "no user for role 'OWNER'"}
+    {'code': 400, 'msg': "no login user for role 'OWNER'"}
 
     >>> #query one with OWNER but cannot filter with OWNER
     >>> data ='''{
@@ -199,6 +222,72 @@ def test_apijson_get():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 400, 'msg': "'user' not accessible by role 'superuser'"}
+
+    >>> #query array
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {"@role":"ADMIN"}
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'is_superuser': True, 'last_login': None, 'date_join': '2018-11-01 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'email': 'usera@localhost', 'is_superuser': False, 'last_login': None, 'date_join': '2018-02-02 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 2}}, {'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'is_superuser': False, 'last_login': None, 'date_join': '2018-03-03 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'is_superuser': False, 'last_login': None, 'date_join': '2018-04-04 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 4}}]}
+
+    >>> #query array
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role":"ADMIN",
+    ...             "@column":"id,username,nickname,email"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'email': 'usera@localhost', 'id': 2}}, {'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'id': 4}}]}
+
+    >>> #query array with non existing role
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role":"NONEXISTING",
+    ...             "@column":"id,username,nickname,email"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'user' not accessible by role 'NONEXISTING'"}
+
+    >>> #query array with UNKNOWN
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@column":"id,username,nickname,email"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'user' not accessible by role 'UNKNOWN'"}
+
+    >>> #query array without login user
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role":"ADMIN",
+    ...             "@column":"id,username,nickname,email"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "no login user for role 'ADMIN'"}
 
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
