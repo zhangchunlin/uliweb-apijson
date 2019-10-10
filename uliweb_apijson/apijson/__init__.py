@@ -117,8 +117,8 @@ class ApiJsonModelQuery(object):
             try:
                 query_count = int(query_count)
             except ValueError as e:
-                log.error("bad param in '%s': '%s'"%(n,self.query_params))
-                raise UliwebError("@count should be an int, now '%s'"%(query_count))
+                log.error("bad param in '%s': '%s'"%(query_count,self.query_params))
+                raise UliwebError("@count should be an int, but get '%s'"%(query_count))
         self.query_count = query_count
 
         query_page = self.query_params.get("@page")
@@ -127,10 +127,10 @@ class ApiJsonModelQuery(object):
             try:
                 query_page = int(query_page)
             except ValueError as e:
-                log.error("bad param in '%s': '%s'"%(n,self.query_params))
-                raise UliwebError("@page should be an int, now '%s'"%(query_page))
+                log.error("bad param in '%s': '%s'"%(query_page,self.query_params))
+                raise UliwebError("@page should be an int, but get '%s'"%(query_page))
             if query_page<0:
-                raise UliwebError("page should >0, now is '%s'"%(query_page))
+                raise UliwebError("page should >0, but get '%s'"%(query_page))
         self.query_page = query_page
 
         #https://github.com/TommyLemon/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
