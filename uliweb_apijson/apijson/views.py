@@ -254,7 +254,7 @@ class ApiJson(object):
         elif hasattr(model,n):
             return getattr(model.c,n)==model_param[n]
         else:
-            raise UliwebError("not support item: '%s'"%(item))
+            raise UliwebError("non-existent column or not support item: '%s'"%(item))
 
     def head(self):
         try:

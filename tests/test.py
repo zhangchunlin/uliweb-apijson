@@ -743,6 +743,24 @@ def test_apijson_get():
     >>> print(d)
     {'code': 400, 'msg': "model does not have this column: 'nonexist'"}
 
+    >>> #query array with a nonexist column
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "nonexist":1
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "non-existent column or not support item: 'nonexist'"}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},
