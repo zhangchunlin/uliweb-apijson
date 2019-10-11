@@ -200,26 +200,26 @@ class ApiJson(object):
 
     def _expr(self,model,model_param,model_expr):
         if not isinstance(model_expr,list):
-            raise UliwebError("only accept array in @expr: '%s'"%(model_expr))
+            raise UliwebError("only accept array in @expr, but get '%s'"%(model_expr))
         num = len(model_expr)
         if (num<2 or num>3):
-            raise UliwebError("only accept 2 or 3 items in @expr: '%s'"%(model_expr))
+            raise UliwebError("only accept 2 or 3 items in @expr, but get '%s'"%(model_expr))
         op = model_expr[-2]
         if op=='&':
             if num!=3:
-                raise UliwebError("'&'(and) expression need 3 items: '%s'"%(model_expr))
+                raise UliwebError("'&'(and) expression need 3 items, but get '%s'"%(model_expr))
             c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
             c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
             return and_(c1,c2)
         elif op=='|':
             if num!=3:
-                raise UliwebError("'|'(or) expression need 3 items: '%s'"%(model_expr))
+                raise UliwebError("'|'(or) expression need 3 items, but get '%s'"%(model_expr))
             c1 = self._get_filter_condition(model,model_param,model_expr[0],expr=True)
             c2 = self._get_filter_condition(model,model_param,model_expr[2],expr=True)
             return or_(c1,c2)
         elif op=='!':
             if num!=2:
-                raise UliwebError("'!'(not) expression need 2 items: '%s'"%(model_expr))
+                raise UliwebError("'!'(not) expression need 2 items, but get '%s'"%(model_expr))
             return not_(self._get_filter_condition(model,model_param,model_expr[1],expr=True))
         else:
             raise UliwebError("unknown operator: '%s'"%(op))

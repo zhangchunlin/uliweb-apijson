@@ -567,6 +567,146 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userc', 'nickname': 'User C', 'email': 'userc@localhost', 'id': 4}}, {'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'id': 3}}]}
 
+    >>> #query array with @expr, bad param which is not list
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":{},
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "only accept array in @expr, but get 'OrderedDict()'"}
+
+    >>> #query array with @expr, bad param which is an empty list
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":[],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "only accept 2 or 3 items in @expr, but get '[]'"}
+
+    >>> #query array with @expr, bad param which is >3 items list
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["username$","|","username$","|","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "only accept 2 or 3 items in @expr, but get '['username$', '|', 'username$', '|', 'nickname$']'"}
+
+    >>> #query array with @expr, bad param which have bad operator
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["username$","*","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "unknown operator: '*'"}
+
+    >>> #query array with @expr, bad expr: & only 1 parameter
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["&","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'&'(and) expression need 3 items, but get '['&', 'nickname$']'"}
+
+    >>> #query array with @expr, bad expr: | only 1 parameter
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["|","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'|'(or) expression need 3 items, but get '['|', 'nickname$']'"}
+
+    >>> #query array with @expr, bad expr: | only 1 parameter
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "@expr":["username$","!","nickname$"],
+    ...             "username$":"%b%",
+    ...             "nickname$":"%c%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'!'(not) expression need 2 items, but get '['username$', '!', 'nickname$']'"}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},
@@ -579,6 +719,32 @@ def test_apijson_get():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 200, 'msg': 'success', 'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}, 'user': {'username': 'usera', 'email': 'usera@localhost', 'id': 2}}
+
+    >>> #Association query: Two tables, one is array, one is single, there is a abs reference to array
+    >>> data ='''{
+    ...     "moment[]":{"moment":{"@count":3}},
+    ...     "user":{
+    ...     "@column": "id,username,email",
+    ...     "id@": "moment[]/1/moment/user_id"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}], 'user': {'username': 'userb', 'email': 'userb@localhost', 'id': 3}}
+
+    >>> #Association query: Two tables, one is array, one is single, there is a rel reference to array
+    >>> data ='''{
+    ...     "moment[]":{"moment":{"@count":3}},
+    ...     "user":{
+    ...     "@column": "id,username,email",
+    ...     "id@": "/moment[]/1/moment/user_id"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}], 'user': {'username': 'userb', 'email': 'userb@localhost', 'id': 3}}
 
     >>> #Association query: Two tables, one to one,ref path is relative path
     >>> data ='''{

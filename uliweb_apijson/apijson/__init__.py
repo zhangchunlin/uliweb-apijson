@@ -163,7 +163,7 @@ class ApiJsonModelQuery(object):
 
         #@expr
         model_expr = params.get("@expr")
-        if model_expr:
+        if model_expr!=None:
             c = self.parent._expr(self.model,params,model_expr)
             q = q.filter(c)
         else:
@@ -258,5 +258,4 @@ class ApiJsonModelQuery(object):
                     del params[i]
                 params.update(refs)
             q = self._get_array_q(params)
-            q = q.limit(1)
             item[self.name] = self._get_info(q.one())
