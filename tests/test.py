@@ -875,4 +875,50 @@ def test_apijson_head():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 400, 'msg': "role 'UNKNOWN' not have permission HEAD for 'privacy'"}
+
+    >>> #apijson head, user don't have role
+    >>> data ='''{
+    ...     "privacy": {
+    ...         "@role":"ADMIN",
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "user doesn't have role 'ADMIN'"}
+
+    >>> #apijson head, with OWNER
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role":"OWNER"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    Moment: owner_condition
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'code': 200, 'msg': 'success', 'count': 1}}
+
+    >>> #apijson head, with OWNER but cannot filter with OWNER
+    >>> data ='''{
+    ...     "publicnotice": {
+    ...         "@role":"OWNER"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'publicnotice' cannot filter with owner"}
+
+    >>> #apijson head, with a nonexistant column
+    >>> data ='''{
+    ...     "moment": {
+    ...         "nonexist": 2
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' don't have field 'nonexist'"}
     """

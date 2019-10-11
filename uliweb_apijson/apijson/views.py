@@ -304,6 +304,7 @@ class ApiJson(object):
             permission_check_ok = True
         else:
             return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
+        #current implementation won't run here, but keep for safe
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
 
