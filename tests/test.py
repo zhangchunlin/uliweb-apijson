@@ -707,6 +707,42 @@ def test_apijson_get():
     >>> print(d)
     {'code': 400, 'msg': "'!'(not) expression need 2 items, but get '['username$', '!', 'nickname$']'"}
 
+    >>> #query array with like
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "username$":"%b%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userb', 'nickname': 'User B', 'email': 'userb@localhost', 'id': 3}}]}
+
+    >>> #query array with like, but gave a nonexist column
+    >>> data ='''{
+    ...   "[]":{
+    ...     "@count":4,
+    ...     "@page":0,
+    ...     "user":{
+    ...             "@column":"id,username,nickname,email",
+    ...             "@order":"id-",
+    ...             "@role":"ADMIN",
+    ...             "nonexist$":"%b%"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model does not have this column: 'nonexist'"}
+
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{
     ...     "moment":{},

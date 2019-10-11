@@ -225,26 +225,30 @@ class ApiJson(object):
             raise UliwebError("unknown operator: '%s'"%(op))
 
     def _get_filter_condition(self,model,model_param,item,expr=False):
+        #item can be param key, or expr which expected to be a list
         if isinstance(item,list):
             if expr:
                 return self._expr(model,model_param,model_expr=item)
             else:
-                raise UliwebError("item can be array only in @expr: '%s'"%(item))
+                #current implementation won't run here, but keep for safe
+                raise UliwebError("item can be list only in @expr: '%s'"%(item))
         if not isinstance(item,string_types):
+            #current implementation won't run here, but keep for safe
             raise UliwebError("item should be array or string: '%s'"%(item))
         n = item
         if n[0]=="@":
+            #current implementation won't run here, but keep for safe
             raise UliwebError("param key should not begin with @: '%s'"%(n))
         if n[-1]=="$":
             name = n[:-1]
             if hasattr(model,name):
                 return getattr(model.c,name).like(model_param[n])
             else:
-                raise UliwebError("'%s' does not have '%s'"%(model_name,name))
+                raise UliwebError("model does not have this column: '%s'"%(name))
         elif n[-1]=="}" and n[-2]=="{":
             name = n[:-2]
             if hasattr(model,name):
-                # TODO
+                # TODO: https://github.com/APIJSON/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
                 pass
             raise UliwebError("still not support '%s'"%(name))
         elif hasattr(model,n):
