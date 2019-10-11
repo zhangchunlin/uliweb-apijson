@@ -112,12 +112,12 @@ class ApiJson(object):
         roles = GET.get("roles")
         permission_check_ok = False
         if not params_role:
-            if hasattr(request,"user"):
+            if hasattr(request,"user") and request.user:
                 params_role = "LOGIN"
             else:
                 params_role = "UNKNOWN"
         elif params_role != "UNKNOWN":
-            if not hasattr(request,"user"):
+            if not (hasattr(request,"user") and request.user):
                 return json({"code":400,"msg":"no login user for role '%s'"%(params_role)})
         if params_role not in roles:
             return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
@@ -290,7 +290,7 @@ class ApiJson(object):
         roles = HEAD.get("roles")
         permission_check_ok = False
         if not params_role:
-            if request.user:
+            if hasattr(request,"user") and request.user:
                 params_role = "LOGIN"
             else:
                 params_role = "UNKNOWN"
@@ -298,7 +298,7 @@ class ApiJson(object):
             return json({"code":400,"msg":"role '%s' not have permission HEAD for '%s'"%(params_role,model_name)})
         if params_role == "UNKNOWN":
             permission_check_ok = True
-        elif not hasattr(request,"user"):
+        elif not (hasattr(request,"user") and request.user):
             return json({"code":400,"msg":"no login user for role '%s'"%(params_role)})
         elif functions.has_role(request.user,params_role):
             permission_check_ok = True
@@ -387,7 +387,7 @@ class ApiJson(object):
             if roles:
                 for role in roles:
                     if role == "OWNER":
-                        if request.user:
+                        if hasattr(request,"user") and request.user:
                             permission_check_ok = True
                             if user_id_field:
                                 params[user_id_field] = request.user.id
@@ -506,7 +506,7 @@ class ApiJson(object):
             if roles:
                 for role in roles:
                     if role == "OWNER":
-                        if request.user:
+                        if hasattr(request,"user") and request.user:
                             if user_id_field:
                                 if obj.to_dict().get(user_id_field)==request.user.id:
                                     permission_check_ok = True
@@ -627,7 +627,7 @@ class ApiJson(object):
             if roles:
                 for role in roles:
                     if role == "OWNER":
-                        if request.user:
+                        if hasattr(request,"user") and request.user:
                             if user_id_field:
                                 if obj.to_dict().get(user_id_field)==request.user.id:
                                     permission_check_ok = True

@@ -864,4 +864,15 @@ def test_apijson_head():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 400, 'msg': "no login user for role 'ADMIN'"}
+
+    >>> #apijson head, without user and @role
+    >>> data ='''{
+    ...     "privacy": {
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "role 'UNKNOWN' not have permission HEAD for 'privacy'"}
     """
