@@ -813,3 +813,55 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', 'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}, 'user': {'username': 'usera', 'email': 'usera@localhost', 'id': 2}}
     """
+
+def test_apijson_head():
+    """
+    >>> application = make_simple_application(project_dir='.')
+    >>> handler = application.handler()
+
+    >>> #apijson head
+    >>> data ='''{
+    ...     "moment": {
+    ...         "user_id": 2
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'code': 200, 'msg': 'success', 'count': 1}}
+
+    >>> #apijson head, with a nonexistant model
+    >>> data ='''{
+    ...     "nonexist": {
+    ...         "user_id": 2
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model 'nonexist' not found"}
+
+    >>> #apijson head, without permission of HEAD
+    >>> data ='''{
+    ...     "privacy": {
+    ...         "@role":"LOGIN",
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "role 'LOGIN' not have permission HEAD for 'privacy'"}
+
+    >>> #apijson head, without user
+    >>> data ='''{
+    ...     "privacy": {
+    ...         "@role":"ADMIN",
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "no login user for role 'ADMIN'"}
+    """
