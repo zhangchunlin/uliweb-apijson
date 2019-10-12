@@ -922,3 +922,106 @@ def test_apijson_head():
     >>> print(d)
     {'code': 400, 'msg': "'moment' don't have field 'nonexist'"}
     """
+
+def test_apijson_post():
+    """
+    >>> application = make_simple_application(project_dir='.')
+    >>> handler = application.handler()
+
+    >>> #apijson post, without @tag
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test",
+    ...         "picture_list": ["http://static.oschina.net/uploads/user/48/96331_50.jpg"]
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'tag' parameter is needed"}
+
+    >>> #apijson post
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test",
+    ...         "picture_list": ["http://static.oschina.net/uploads/user/48/96331_50.jpg"]
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> del d['moment']['date']
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'user_id': 1, 'content': 'new moment for test', 'picture_list': ['http://static.oschina.net/uploads/user/48/96331_50.jpg'], 'id': 4, 'code': 200, 'message': 'success'}}
+
+    >>> #apijson post to a non exist model
+    >>> data ='''{
+    ...     "nonexist": {
+    ...         "content": "new moment for test",
+    ...         "picture_list": ["http://static.oschina.net/uploads/user/48/96331_50.jpg"]
+    ...     },
+    ...     "@tag": "nonexist"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model 'nonexist' not found"}
+
+    >>> #apijson post, tag is model which not define in APIJSON_REQUESTS
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test",
+    ...         "picture_list": ["http://static.oschina.net/uploads/user/48/96331_50.jpg"]
+    ...     },
+    ...     "@tag": "role"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "tag 'role' not found"}
+
+    >>> #apijson post, tag is model which not define in APIJSON_REQUESTS
+    >>> data ='''{
+    ...     "user": {
+    ...         "username": "test"
+    ...     },
+    ...     "@tag": "user"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "tag 'user' not found"}
+    """
+
+def test_apijson_put():
+    """
+    >>> application = make_simple_application(project_dir='.')
+    >>> handler = application.handler()
+
+    >>> #apijson put
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'id': 1, 'code': 200, 'msg': 'success', 'count': 1}}
+
+    >>> #apijson put, with @role
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role": "ADMIN",
+    ...         "id": 1,
+    ...         "content": "moment content after change 2"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'id': 1, 'code': 200, 'msg': 'success', 'count': 1}}
+    """

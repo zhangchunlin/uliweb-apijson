@@ -542,6 +542,8 @@ class ApiJson(object):
         for k in params:
             if k=="id":
                 continue
+            elif k[0]=="@":
+                continue
             elif hasattr(obj,k):
                 kwargs[k] = params[k]
             else:
