@@ -257,7 +257,7 @@ Vue.component('apijson-table', {
                 }
             }
             else {
-                this.viewedit_items.push({title:"id",value:row.id,component:"input"})
+                this.viewedit_items.push({key:"id",title:"id",value:row.id,component:"input"})
                 var type2comp = {
                     "boolean":"checkbox"
                 }
@@ -265,7 +265,7 @@ Vue.component('apijson-table', {
                     if (k!="id" && k[0]!="_") {
                         var value = row[k]
                         var comp = type2comp[typeof value] || "input"
-                        this.viewedit_items.push({title:k,value:value,component:comp})
+                        this.viewedit_items.push({title:k,key:k,value:value,component:comp})
                     }
                 }
             }
@@ -297,8 +297,8 @@ Vue.component('apijson-table', {
             //only save modified fields
             for (var k in thisp.viewedit_items) {
                 var d = thisp.viewedit_items[k]
-                if (d.title=="id"|| d.value!=row[d.title]) {
-                    record_params[d.title] = d.value
+                if (d.key=="id"|| d.value!=row[d.key]) {
+                    record_params[d.key] = d.value
                 }
             }
             if (thisp.role!="") {
