@@ -53,7 +53,7 @@ Vue.component('apijson-table', {
         var thisp = this
         return {
             l_request_tag: null,
-            role: "{{=role}}",
+            role: "{{=role or ''}}",
 
             loading: false,
             modal_view: false,
@@ -439,6 +439,9 @@ Vue.component('apijson-table', {
             for (var k in thisp.add_items) {
                 var d = thisp.add_items[k]
                 post_params[d.key] = d.value
+            }
+            if (thisp.role!="") {
+                post_params["@role"] = thisp.role
             }
             params[this.l_request_tag] = post_params
             params = thisp.ajax_hook("apijson_post","add",params)
