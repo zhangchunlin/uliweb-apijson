@@ -25,7 +25,7 @@ Vue.component('apijson-viewedit', {
     data: function(){
         return {
             l_request_tag: null,
-            role: "{{=role}}",
+            role: "{{=role or ''}}",
             row: {},
             row_saved: {},
             viewedit_items: [],
@@ -38,8 +38,10 @@ Vue.component('apijson-viewedit', {
         init_viewedit: function(){
             var params = {}
             var model_params = {
-                "id":this.id,
-                "@role":this.role
+                "id":this.id
+            }
+            if (this.role!='') {
+                model_params["@role"] = this.role
             }
             params[this.model_name] = model_params
             var thisp = this
@@ -88,6 +90,9 @@ Vue.component('apijson-viewedit', {
                     record_params[d.key] = d.value
                     this.row[d.key] = d.value
                 }
+            }
+            if (this.role!='') {
+                record_params["@role"] = this.role
             }
             params[this.l_request_tag] = record_params
             params = this.ajax_hook("apijson_put","update",params)
