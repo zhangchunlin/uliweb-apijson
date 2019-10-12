@@ -384,9 +384,13 @@ Vue.component('apijson-table', {
             var params = {
                 "@tag": thisp.l_request_tag
             }
-            params[thisp.l_request_tag] = {
+            var model_params = {
                 "id": thisp.delete_params.row.id
             }
+            if (thisp.role!="") {
+                model_params["@role"] = thisp.role
+            }
+            params[thisp.l_request_tag] = model_params
             params = thisp.ajax_hook("apijson_delete","delete",params)
             $.ajax({
                 type: "POST",
