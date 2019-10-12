@@ -4,10 +4,11 @@ uliweb-apijson is a subset and slightly different variation of [apijson](https:/
 
 # Difference with original apijson
 
-| feature  | apijson(java) | uliweb-apijson | comment                                                      |
-| -------- | ------------- | -------------- | ------------------------------------------------------------ |
-| @combine | ✔️             | ✖️              | Example:  "@combine":"&key0,&key1,\|key2,key3"               |
-| @expr    | ✖️             | ✔️              | Example:  "@expr":[["username$","&","email$"],"&",["!","nickname$"]] |
+| feature             | apijson(java)   | uliweb-apijson   | comment                                                      |
+| ------------------- | --------------- | ---------------- | ------------------------------------------------------------ |
+| @combine            | ✔️               | ✖️                | Example:  "@combine":"&key0,&key1,\|key2,key3"               |
+| @expr               | ✖️               | ✔️                | Example:  "@expr":[["username$","&","email$"],"&",["!","nickname$"]] |
+| tag in apijson post/put | "tag": "Moment" | "@tag": "Moment" |                                                              |
 
 
 
