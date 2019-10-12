@@ -15,25 +15,25 @@ user_list = [
         "username": "admin",
         "nickname": "Administrator",
         "email": "admin@localhost",
-        "date_join": "2018-1-1",
+        "date_join": "2018-1-1 0:0:0",
     },
     {
         "username": "usera",
         "nickname": "User A",
         "email": "usera@localhost",
-        "date_join": "2018-2-2",
+        "date_join": "2018-2-2 0:0:0",
     },
     {
         "username": "userb",
         "nickname": "User B",
         "email": "userb@localhost",
-        "date_join": "2018-3-3",
+        "date_join": "2018-3-3 0:0:0",
     },
     {
         "username": "userc",
         "nickname": "User C",
         "email": "userc@localhost",
-        "date_join": "2018-4-4",
+        "date_join": "2018-4-4 0:0:0",
     },
 ]
 
