@@ -53,6 +53,7 @@ Vue.component('apijson-table', {
         var thisp = this
         return {
             l_request_tag: null,
+            role: "{{=role}}",
 
             loading: false,
             modal_view: false,
@@ -176,10 +177,13 @@ Vue.component('apijson-table', {
                 "@page":thisp.current_page-1,
                 "@query":2
             }
-            arr_params[thisp.model_name] = {
-                "@order":thisp.sort_key+thisp.sort_order,
-                "@role":"{{=role}}"
+            var model_params = {
+                "@order":thisp.sort_key+thisp.sort_order
             }
+            if (thisp.role!="") {
+                model_params["@role"] = thisp.role
+            }
+            arr_params[thisp.model_name] = model_params
             var params = {
                 "[]":arr_params,
                 "total@":"/[]/total"
@@ -293,9 +297,12 @@ Vue.component('apijson-table', {
             //only save modified fields
             for (var k in thisp.viewedit_items) {
                 var d = thisp.viewedit_items[k]
-                if (d.key=="id"|| d.value!=row[d.key]) {
-                    record_params[d.key] = d.value
+                if (d.title=="id"|| d.value!=row[d.title]) {
+                    record_params[d.title] = d.value
                 }
+            }
+            if (thisp.role!="") {
+                record_params["@role"] = thisp.role
             }
             params[thisp.l_request_tag] = record_params
             params = thisp.ajax_hook("apijson_put","update",params)
