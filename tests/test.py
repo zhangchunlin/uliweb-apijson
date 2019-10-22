@@ -2,12 +2,17 @@ import os
 from uliweb import manage
 from uliweb.manage import make_simple_application
 from json import loads as json_loads
+from nose import with_setup
 
-os.chdir('demo')
+def setup():
+    os.chdir('demo')
 
-manage.call('uliweb syncdb -v')
-manage.call('uliweb reset -v -y')
-manage.call('uliweb dbinit -v')
+    manage.call('uliweb syncdb -v')
+    manage.call('uliweb reset -v -y')
+    manage.call('uliweb dbinit -v')
+
+def teardown():
+    pass
 
 def pre_call_as(username):
     from uliweb import models
@@ -17,6 +22,7 @@ def pre_call_as(username):
         request.user = user
     return pre_call
 
+@with_setup(setup,teardown)
 def test_apijson_get():
     """
     >>> application = make_simple_application(project_dir='.')
@@ -1232,4 +1238,184 @@ def test_apijson_put():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 400, 'msg': 'failed when updating, maybe no change', 'moment': {'id': 1, 'code': 400, 'msg': 'failed when updating, maybe no change', 'count': 0}}
+    """
+
+def test_apijson_delete():
+    """
+    >>> application = make_simple_application(project_dir='.')
+    >>> handler = application.handler()
+
+    >>> #apijson delete
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'id': 1, 'code': 200, 'message': 'success', 'count': 1}}
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': None}
+
+    >>> #apijson delete, without @tag
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": %s
+    ...     }
+    ... }'''%(d["moment"]["id"])
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'tag' parameter is needed"}
+
+    >>> #apijson delete, with non exist model
+    >>> data ='''{
+    ...     "nonexist": {
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "nonexist"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model 'nonexist' not found"}
+
+    >>> #apijson delete, default to OWNER and delete other's record
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 2
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'no permission'}
+
+    >>> #apijson delete, without id
+    >>> data ='''{
+    ...     "moment": {
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'id param needed'}
+
+    >>> #apijson delete, id not int
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": "abc"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "id 'abc' cannot convert to integer"}
+
+    >>> #apijson delete
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 100
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "cannot find record id = '100'"}
+
+    >>> #apijson delete, with a role having no permission
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role": "UNKNOWN",
+    ...         "id": %s
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''%(d["moment"]["id"])
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' not accessible by role 'UNKNOWN'"}
+
+    >>> #apijson delete, with OWNER but not login
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": %s
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''%(d["moment"]["id"])
+    >>> r = handler.post('/apijson/delete', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'need login user'}
+
+    >>> #apijson delete, with UNKNOWN role
+    >>> data ='''{
+    ...     "publicnotice": {
+    ...         "@role": "UNKNOWN",
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "publicnotice"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'publicnotice': {'id': 1, 'code': 200, 'message': 'success', 'count': 1}}
+
+    >>> #apijson delete, with a role which have no permission
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "new moment for test"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role": "superuser",
+    ...         "id": %s
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''%(d["moment"]["id"])
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' not accessible by role 'superuser'"}
     """

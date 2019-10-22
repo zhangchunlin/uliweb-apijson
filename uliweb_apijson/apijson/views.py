@@ -617,7 +617,7 @@ class ApiJson(object):
             return json({"code":400,"msg":"id '%s' cannot convert to integer"%(params.get("id"))})
         obj = model.get(id_)
         if not obj:
-            return json({"code":400,"msg":"cannot find record id '%s'"%(id_)})
+            return json({"code":400,"msg":"cannot find record id = '%s'"%(id_)})
 
         permission_check_ok = False
         DELETE = model_setting.get("DELETE")
