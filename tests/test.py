@@ -1024,4 +1024,213 @@ def test_apijson_put():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 200, 'msg': 'success', 'moment': {'id': 1, 'code': 200, 'msg': 'success', 'count': 1}}
+
+    >>> #apijson put, model not exists
+    >>> data ='''{
+    ...     "nonexist": {
+    ...         "@role": "ADMIN",
+    ...         "id": 1,
+    ...         "content": "moment content after change 2"
+    ...     },
+    ...     "@tag": "nonexist"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model 'nonexist' not found"}
+
+    >>> #apijson put, with a model no tag
+    >>> data ='''{
+    ...     "norequesttag": {
+    ...         "user_id": 1,
+    ...         "content": "test"
+    ...     },
+    ...     "@tag": "norequesttag"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "tag 'norequesttag' not found"}
+
+    >>> #apijson put, test ADD in put
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 2,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'no permission'}
+
+    >>> #apijson put, without id
+    >>> data ='''{
+    ...     "moment": {
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'id param needed'}
+
+    >>> #apijson put, with id not integer
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": "abc",
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "id 'abc' cannot convert to integer"}
+
+    >>> #apijson put, with a id cannot find record
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 100,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "cannot find record which id = '100'"}
+
+    >>> #apijson put, with a role which have no permission
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role": "LOGIN",
+    ...         "id": 1,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' not accessible by role 'LOGIN'"}
+
+    >>> #apijson put, with UNKNOWN role
+    >>> data ='''{
+    ...     "publicnotice": {
+    ...         "@role": "UNKNOWN",
+    ...         "id": 1,
+    ...         "content": "content after change"
+    ...     },
+    ...     "@tag": "publicnotice"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'publicnotice': {'id': 1, 'code': 200, 'msg': 'success', 'count': 1}}
+
+    >>> #apijson put, OWNER but not login
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'OWNER' need login user"}
+
+    >>> #apijson put, with a role not permission
+    >>> data ='''{
+    ...     "moment": {
+    ...         "@role": "superuser",
+    ...         "id": 1,
+    ...         "content": "moment content after change"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' not accessible by role 'superuser'"}
+
+    >>> #apijson put, with a field DISALLOWed
+    >>> data ='''{
+    ...     "comment": {
+    ...         "id": 2,
+    ...         "user_id": 2,
+    ...         "content": "content after change"
+    ...     },
+    ...     "@tag": "comment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "request 'comment' disallow 'user_id'"}
+
+
+    >>> #apijson put, without a field in NECESSARY
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "request 'moment' have not necessary field 'content'"}
+
+    >>> #apijson put, with a non exist field
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1,
+    ...         "content": "moment content after change",
+    ...         "noexist": "test"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'moment' don't have field 'noexist'"}
+
+    >>> #apijson put, and check get result
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1,
+    ...         "content": "check 789"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'id': 1, 'code': 200, 'msg': 'success', 'count': 1}}
+    >>> data ='''{
+    ... "moment":{
+    ...         "id": %s
+    ...     }
+    ... }'''%(d['moment']['id'])
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'check 789', 'picture_list': '[]', 'id': 1}}
+
+    >>> #apijson put, and check get result
+    >>> data ='''{
+    ...     "moment": {
+    ...         "id": 1,
+    ...         "content": "check 789"
+    ...     },
+    ...     "@tag": "moment"
+    ... }'''
+    >>> r = handler.post('/apijson/put', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'failed when updating, maybe no change', 'moment': {'id': 1, 'code': 400, 'msg': 'failed when updating, maybe no change', 'count': 0}}
     """

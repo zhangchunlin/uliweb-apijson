@@ -31,3 +31,7 @@ class Comment(Model):
 class PublicNotice(Model):
     date = Field(datetime.datetime, auto_now_add=True)
     content = Field(TEXT)
+
+class NoRequestTag(Model):
+    user_id = Reference("user")
+    content = Field(TEXT)
