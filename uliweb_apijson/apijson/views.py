@@ -422,13 +422,12 @@ class ApiJson(object):
 
         obj = model(**params)
         ret = obj.save()
-        obj_dict = obj.to_dict(convert=False)
-        secret_fields = model_setting.get("secret_fields")
-        if secret_fields:
-            for k in secret_fields:
-                del obj_dict[k]
+        d = obj.to_dict(convert=False)
 
+        obj_dict = {}
         if ret:
+            obj_dict["id"] = d.get("id")
+            obj_dict["count"] = 1
             obj_dict["code"] = 200
             obj_dict["message"] = "success"
         else:

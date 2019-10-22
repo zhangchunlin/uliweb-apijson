@@ -950,9 +950,8 @@ def test_apijson_post():
     ... }'''
     >>> r = handler.post('/apijson/post', data=data, pre_call=pre_call_as("admin"), middlewares=[])
     >>> d = json_loads(r.data)
-    >>> del d['moment']['date']
     >>> print(d)
-    {'code': 200, 'msg': 'success', 'moment': {'user_id': 1, 'content': 'new moment for test', 'picture_list': ['http://static.oschina.net/uploads/user/48/96331_50.jpg'], 'id': 4, 'code': 200, 'message': 'success'}}
+    {'code': 200, 'msg': 'success', 'moment': {'id': 4, 'count': 1, 'code': 200, 'message': 'success'}}
 
     >>> #apijson post to a non exist model
     >>> data ='''{
