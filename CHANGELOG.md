@@ -1,5 +1,16 @@
 # Changelog
 
+- 0.2.1(2019-10-22)
+  - **apison-post: modify to be same with original apijson, just return "id" and "count", not other fields**
+  - apijson-table: fix key and title problem in viewedit_items
+  - apijson-viewedit: fix @role
+  - apijson-table: fix apijson-put and apijson-delete @role not work problem
+  - doc: add difference in tag parameter in apijson post/put
+  - **tests: add 97 test cases, and fix bugs found by tests**
+  - fix "NameError: name 'log' is not defined"
+  - fix py2/3 compatible
+  - fix  issue #4 :"NameError: name 'UliwebError' is not defined"
+  - apijson-table: add hook_add, for customizing the add action in apijson-table component
 - 0.2.0(2019-09-17)
   - setup: add fix utf8 for reading file
   - **fix json response structure to be same as original apijson api (java)**
