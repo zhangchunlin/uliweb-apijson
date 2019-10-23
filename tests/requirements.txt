@@ -1,0 +1,5 @@
+nose
+six
+SQLAlchemy
+-e git+https://github.com/limodou/uliweb3#egg=uliweb3
+../
