@@ -951,6 +951,22 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userb', 'nickname': 'User B', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
 
+    >>> #query array, {} multiple condition to a same field
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id&{}": ">2,<=4",
+    ...             "id{}": "!=3",
+    ...             "@column": "username,nickname,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
+
     >>> #query array, !{} condition list
     >>> data ='''{
     ... "[]":{
