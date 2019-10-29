@@ -244,17 +244,70 @@ class ApiJson(object):
             if hasattr(model,name):
                 return getattr(model.c,name).like(model_param[n])
             else:
-                raise UliwebError("model does not have this column: '%s'"%(name))
+                raise UliwebError("model does not have column: '%s'"%(name))
         elif n[-1]=="}" and n[-2]=="{":
-            name = n[:-2]
-            if hasattr(model,name):
-                # TODO: https://github.com/APIJSON/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
-                pass
-            raise UliwebError("still not support '%s'"%(name))
+            if n[-3] in ["&","|","!"]:
+                operator = n[-3]
+                name = n[:-3]
+            else:
+                operator = None
+                name = n[:-2]
+
+            if not hasattr(model,name):
+                raise UliwebError("model does not have column: '%s'"%(name))
+
+            # https://github.com/APIJSON/APIJSON/blob/master/Document.md#32-%E5%8A%9F%E8%83%BD%E7%AC%A6
+            # https://vincentcheng.github.io/apijson-doc/zh/grammar.html#%E9%80%BB%E8%BE%91%E8%BF%90%E7%AE%97-%E7%AD%9B%E9%80%89
+            col = getattr(model.c,name)
+            cond = model_param[n]
+            if isinstance(cond,list):
+                fcond = col.in_(cond)
+                if operator== "!":
+                    fcond = not_(fcond)
+                return fcond
+            elif isinstance(cond,str):
+                cond_list = cond.strip().split(",")
+                if len(cond_list)==1:
+                    fcond = self._get_filter_condition_from_str(col,cond_list[0])
+                    if operator=="!":
+                        fcond = not_(fcond)
+                    return fcond
+                elif len(cond_list)>1:
+                    fcond = self._get_filter_condition_from_str(col,cond_list[0])
+                    for c in cond_list:
+                        fc = self._get_filter_condition_from_str(col,c)
+                        if operator=="&":
+                            fcond = and_(fcond,fc)
+                        elif operator=="|" or operator==None:
+                            fcond = or_(fcond,fc)
+                        else:
+                            raise UliwebError("'%s' not supported in condition list"%(operator))
+                    return fcond
+
+            raise UliwebError("not support '%s':'%s'"%(n,cond))
         elif hasattr(model,n):
             return getattr(model.c,n)==model_param[n]
         else:
             raise UliwebError("non-existent column or not support item: '%s'"%(item))
+
+    def _get_filter_condition_from_str(self,col,cond_str):
+        cond_str = cond_str.strip()
+        c1,c2 = cond_str[0],cond_str[1]
+        if c1=='>':
+            if c2=="=":
+                return col >= cond_str[2:]
+            else:
+                return col > cond_str[1:]
+        elif c1=='<':
+            if c2=="=":
+                return col <= cond_str[2:]
+            else:
+                return col < cond_str[1:]
+        elif c1=="=":
+            return col == cond_str[1:]
+        elif c1=="!" and c2=="=":
+            return col != cond_str[2:]
+        raise UliwebError("not support '%s'"%(cond_str))
 
     def head(self):
         try:

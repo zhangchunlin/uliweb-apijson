@@ -11,9 +11,6 @@ def setup():
     manage.call('uliweb reset -v -y')
     manage.call('uliweb dbinit -v')
 
-def teardown():
-    pass
-
 def pre_call_as(username):
     from uliweb import models
     User = models.user
@@ -22,7 +19,6 @@ def pre_call_as(username):
         request.user = user
     return pre_call
 
-@with_setup(setup,teardown)
 def test_apijson_get():
     """
     >>> application = make_simple_application(project_dir='.')
@@ -747,7 +743,7 @@ def test_apijson_get():
     >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': "model does not have this column: 'nonexist'"}
+    {'code': 400, 'msg': "model does not have column: 'nonexist'"}
 
     >>> #query array with a nonexist column
     >>> data ='''{
@@ -766,6 +762,224 @@ def test_apijson_get():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 400, 'msg': "non-existent column or not support item: 'nonexist'"}
+
+    >>> #query array, {} with list
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": [1, 2]
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}]}
+
+    >>> #query array, !{} with list
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id!{}": [1, 2]
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} with a non-exist column name
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "nonexist{}": [1, 2]
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "model does not have column: 'nonexist'"}
+
+    >>> #query array, {} >=
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": ">=2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} =
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": "=2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}]}
+
+    >>> #query array, {} >
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": ">2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} <=
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": "<=2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}]}
+
+    >>> #query array, {} <
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": "<2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}]}
+
+    >>> #query array, !{} <
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id!{}": "<2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} !=
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": "!=2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} with wrong operator
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "id{}": "%=2"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "not support '%=2'"}
+
+    >>> #query array, {} condition list
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id{}": "<=2,>3",
+    ...             "@column": "username,nickname,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'id': 2}}, {'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
+
+    >>> #query array, |{} condition list
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id|{}": "<=2,>3",
+    ...             "@column": "username,nickname,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'id': 2}}, {'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
+
+    >>> #query array, &{} condition list
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id&{}": ">2,<=4",
+    ...             "@column": "username,nickname,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userb', 'nickname': 'User B', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
+
+    >>> #query array, !{} condition list
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id!{}": ">2,<=4",
+    ...             "@column": "username,nickname,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "'!' not supported in condition list"}
+
+    >>> #query array, |{} condition list, item more than 2
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "id|{}": "=1,=2,>=4",
+    ...             "@column": "username,id"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'id': 1}}, {'user': {'username': 'usera', 'id': 2}}, {'user': {'username': 'userc', 'id': 4}}]}
 
     >>> #Association query: Two tables, one to one,ref path is absolute path
     >>> data ='''{

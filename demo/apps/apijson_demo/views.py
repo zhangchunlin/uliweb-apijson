@@ -86,6 +86,28 @@ def index():
         },
 
         {
+            "label":"Array query: {} with list",
+            "value":'''{
+  "[]":{
+    "moment":{
+        "id{}":[2,3]
+    }
+  }
+}''',
+        },
+
+        {
+            "label":"Array query: {} with conditions",
+            "value":'''{
+  "[]":{
+    "user":{
+        "id&{}":">2,<=4"
+    }
+  }
+}''',
+        },
+
+        {
             "label":"Array query: simple @expr",
             "value":'''{
   "[]":{
