@@ -424,8 +424,11 @@ Vue.component('apijson-table', {
         add: function(){
             for (var k in this.add_items){
                 var d = this.add_items[k]
-                d.value = null
                 d.component = d.component || "input"
+                if (!(d.hasOwnProperty('value'))) {
+                    dvalues = {input:'',checkbox:false}
+                    d.value = dvalues[d.component]
+                }
             }
             if (this.hook_add!=null) {
                 this.hook_add(this)
