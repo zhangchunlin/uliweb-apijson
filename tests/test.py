@@ -41,8 +41,8 @@ def test_apijson_get():
     ... }'''
     >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
     >>> d = json_loads(r.data)
-    >>> print(d.keys())
-    dict_keys(['code', 'msg', 'user'])
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'user': {'username': 'admin', 'nickname': 'Administrator', 'email': 'admin@localhost', 'is_superuser': True, 'last_login': None, 'date_join': '2018-01-01 00:00:00', 'image': '', 'active': False, 'locked': False, 'deleted': False, 'auth_type': 'default', 'timezone': '', 'id': 1}}
 
     >>> #query with id
     >>> data ='''{
