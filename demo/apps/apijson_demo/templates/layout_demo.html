@@ -1,11 +1,5 @@
-{{extend "site/layout0.html"}}
+{{extend "iview/layout0.html"}}
 
-{{block title}}uliweb-apijson demo{{end title}}
-
-{{block mainmenu}}
-{{<< mainmenu('apijson')}}
-{{end mainmenu}}
-
-{{block sidemenu}}{{end sidemenu}}
-
-{{block header_custom_menu}}{{end header_custom_menu}}
+{{block mainmenu_config}}
+{{mainmenu_name,mainmenu_active='MAINMENU','apijson'}}
+{{end mainmenu_config}}

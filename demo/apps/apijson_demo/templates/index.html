@@ -1,137 +1,129 @@
 {{extend "layout_demo.html"}}
 
-{{block content_header_title}}<h1>uliweb-apijson api examples</h1>{{end content_header_title}}
+{{block title}}uliweb-apijson demo: requests{{end title}}
 
-{{block content_main}}
-{{use "ui.vue"}}
-{{use "ui.iview"}}
+{{block content_wrapper}}
+<card>
+    <div style="min-height: 600px;">
+        <tabs v-model:value="tab_current" type="card" :animated="false">
+            <tab-pane label="apijson get" name="tab_get"></tab-pane>
+            <tab-pane label="apijson head" name="tab_head"></tab-pane>
+            <tab-pane label="apijson post" name="tab_post"></tab-pane>
+            <tab-pane label="apijson put" name="tab_put"></tab-pane>
+            <tab-pane label="apijson delete" name="tab_delete"></tab-pane>
+        </tabs>
+        <layout>
+        <sider hide-trigger :style="{height: '80vh', width:'360px', 'min-width': '360px', 'max-width': '380px', overflow: 'auto', background: '#fff'}">
+        <i-menu :active-name="0" @on-select="on_select_get" width="360px" ref='menu_get'>
+            <menu-group title="apijson get examples" v-if="tab_current==='tab_get'">
+                <menu-item  v-for="(item,index) in request_get" :name="index" :key="index">
+                    <i class="fa fa-fw fa-file-code-o"></i> {item.label}
+                </menu-item>
+            </menu-group>
+        </i-menu>
+        <i-menu :active-name="0" @on-select="on_select_head" width="360px">
+            <menu-group title="apijson head examples" v-if="tab_current==='tab_head'">
+                <menu-item  v-for="(item,index) in request_head" :name="index" :key="index">
+                    <i class="fa fa-fw fa-file-code-o"></i> {item.label}
+                </menu-item>
+            </menu-group>
+        </i-menu>
+        <i-menu :active-name="0" @on-select="on_select_post" width="360px">
+            <menu-group title="apijson post examples" v-if="tab_current==='tab_post'">
+                <menu-item  v-for="(item,index) in request_post" :name="index" :key="index">
+                    <i class="fa fa-fw fa-file-code-o"></i> {item.label}
+                </menu-item>
+            </menu-group>
+        </i-menu>
+        <i-menu :active-name="0" @on-select="on_select_put" width="360px">
+            <menu-group title="apijson put examples" v-if="tab_current==='tab_put'">
+                <menu-item  v-for="(item,index) in request_put" :name="index" :key="index">
+                    <i class="fa fa-fw fa-file-code-o"></i> {item.label}
+                </menu-item>
+            </menu-group>
+        </i-menu>
+        <i-menu :active-name="0" @on-select="on_select_delete" width="360px">
+            <menu-group title="apijson delete examples" v-if="tab_current==='tab_delete'">
+                <menu-item  v-for="(item,index) in request_delete" :name="index" :key="index">
+                    <i class="fa fa-fw fa-file-code-o"></i> {item.label}
+                </menu-item>
+            </menu-group>
+        </i-menu>
+        </sider>
+        <i-content :style="{padding: '24px', minHeight: '280px', background: '#fff'}">
+        <Row>
+            <i-col span="3"><div align="center">login user</div></i-col>
+            <i-col span="18"><i-input value="{{=user_info}}" readonly/></i-col>
+            {{if request.user:}}
+            <i-col span="1"><div align="center"><i-button type="warning" size="large" @click="logout">Logout</i-button></div></i-col>
+            {{else:}}
+            <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="login">Login</i-button></div></i-col>
+            {{pass}}
+        </Row>
+        <Row v-if="tab_current==='tab_get'">
+            <i-col span="3"><div align="center">HTTP POST URL</div></i-col>
+            <i-col span="18"><i-input value="/apijson/get" readonly/></i-col>
+        </Row>
+        <Row v-if="tab_current==='tab_get'">
+            <i-col span="3"><div align="center">example name</div></i-col>
+            <i-col span="18"><strong><i-input :value="request_get[cmenu_get].label" readonly/></strong></i-col>
+        </Row>
+    
+        <Row v-if="tab_current==='tab_head'">
+            <i-col span="3"><div align="center">HTTP HEAD URL</div></i-col>
+            <i-col span="18"><i-input value="/apijson/head" readonly/></i-col>
+        </Row>
+        <Row v-if="tab_current==='tab_head'">
+            <i-col span="3"><div align="center">example name</div></i-col>
+            <i-col span="18"><strong><i-input :value="request_head[cmenu_head].label" readonly/></strong></i-col>
+        </Row>
+    
+        <Row v-if="tab_current==='tab_post'">
+            <i-col span="3"><div align="center">POST URL</div></i-col>
+            <i-col span="18"><i-input value="/apijson/post" readonly/></i-col>
+        </Row>
+        <Row v-if="tab_current==='tab_post'">
+            <i-col span="3"><div align="center">example name</div></i-col>
+            <i-col span="18"><strong><i-input :value="request_post[cmenu_post].label" readonly/></strong></i-col>
+        </Row>
+    
+        <Row v-if="tab_current==='tab_put'">
+            <i-col span="3"><div align="center">PUT URL</div></i-col>
+            <i-col span="18"><i-input value="/apijson/put" readonly/></i-col>
+        </Row>
+        <Row v-if="tab_current==='tab_put'">
+            <i-col span="3"><div align="center">example name</div></i-col>
+            <i-col span="18"><strong><i-input :value="request_put[cmenu_put].label" readonly/></strong></i-col>
+        </Row>
+    
+        <Row v-if="tab_current==='tab_delete'">
+            <i-col span="3"><div align="center">DELETE URL</div></i-col>
+            <i-col span="18"><i-input value="/apijson/delete" readonly/></i-col>
+        </Row>
+        <Row v-if="tab_current==='tab_delete'">
+            <i-col span="3"><div align="center">example name</div></i-col>
+            <i-col span="18"><strong><i-input :value="request_delete[cmenu_delete].label" readonly/></strong></i-col>
+        </Row>
+    
+        <Row>
+            <i-col span="3"><div align="center">request data</div></i-col>
+            <i-col span="18"><i-input v-model="request_data" type="textarea" :autosize="{minRows: 3,maxRows: 15}" placeholder="request data" /></i-col>
+            <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="post_request_data" v-bind:disabled="!can_post">Post</i-button></div></i-col>
+        </Row>
+        <Row>
+            <i-col span="3"><div align="center">response data</div></i-col>
+            <i-col span="18"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
+        </Row>
+        </i-content>
+        </layout>
+    </div>
+</card>
+{{end content_wrapper}}
 
-<style>
-    .notice
-    {
-        color:red;
-        font-size:150%;
-    }
-</style>
-
-<div id="app" class='box'>
-<div class="box-body">
-    <tabs v-model:value="tab_current" type="card" :animated="false">
-        <tab-pane label="apijson get" name="tab_get"></tab-pane>
-        <tab-pane label="apijson head" name="tab_head"></tab-pane>
-        <tab-pane label="apijson post" name="tab_post"></tab-pane>
-        <tab-pane label="apijson put" name="tab_put"></tab-pane>
-        <tab-pane label="apijson delete" name="tab_delete"></tab-pane>
-    </tabs>
-    <layout>
-    <sider hide-trigger :style="{height: '80vh', width:'360px', 'min-width': '360px', 'max-width': '380px', overflow: 'auto', background: '#fff'}">
-    <i-menu :active-name="0" @on-select="on_select_get" width="360px" ref='menu_get'>
-        <menu-group title="apijson get examples" v-if="tab_current==='tab_get'">
-            <menu-item  v-for="(item,index) in request_get" :name="index" :key="index">
-                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
-            </menu-item>
-        </menu-group>
-    </i-menu>
-    <i-menu :active-name="0" @on-select="on_select_head" width="360px">
-        <menu-group title="apijson head examples" v-if="tab_current==='tab_head'">
-            <menu-item  v-for="(item,index) in request_head" :name="index" :key="index">
-                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
-            </menu-item>
-        </menu-group>
-    </i-menu>
-    <i-menu :active-name="0" @on-select="on_select_post" width="360px">
-        <menu-group title="apijson post examples" v-if="tab_current==='tab_post'">
-            <menu-item  v-for="(item,index) in request_post" :name="index" :key="index">
-                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
-            </menu-item>
-        </menu-group>
-    </i-menu>
-    <i-menu :active-name="0" @on-select="on_select_put" width="360px">
-        <menu-group title="apijson put examples" v-if="tab_current==='tab_put'">
-            <menu-item  v-for="(item,index) in request_put" :name="index" :key="index">
-                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
-            </menu-item>
-        </menu-group>
-    </i-menu>
-    <i-menu :active-name="0" @on-select="on_select_delete" width="360px">
-        <menu-group title="apijson delete examples" v-if="tab_current==='tab_delete'">
-            <menu-item  v-for="(item,index) in request_delete" :name="index" :key="index">
-                <i class="fa fa-fw fa-file-code-o"></i> {item.label}
-            </menu-item>
-        </menu-group>
-    </i-menu>
-    </sider>
-    <i-content :style="{padding: '24px', minHeight: '280px', background: '#fff'}">
-    <Row>
-        <i-col span="3"><div align="center">login user</div></i-col>
-        <i-col span="18"><i-input value="{{=user_info}}" readonly/></i-col>
-        {{if request.user:}}
-        <i-col span="1"><div align="center"><i-button type="warning" size="large" @click="logout">Logout</i-button></div></i-col>
-        {{else:}}
-        <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="login">Login</i-button></div></i-col>
-        {{pass}}
-    </Row>
-    <Row v-if="tab_current==='tab_get'">
-        <i-col span="3"><div align="center">HTTP POST URL</div></i-col>
-        <i-col span="18"><i-input value="/apijson/get" readonly/></i-col>
-    </Row>
-    <Row v-if="tab_current==='tab_get'">
-        <i-col span="3"><div align="center">example name</div></i-col>
-        <i-col span="18"><strong><i-input :value="request_get[cmenu_get].label" readonly/></strong></i-col>
-    </Row>
-
-    <Row v-if="tab_current==='tab_head'">
-        <i-col span="3"><div align="center">HTTP HEAD URL</div></i-col>
-        <i-col span="18"><i-input value="/apijson/head" readonly/></i-col>
-    </Row>
-    <Row v-if="tab_current==='tab_head'">
-        <i-col span="3"><div align="center">example name</div></i-col>
-        <i-col span="18"><strong><i-input :value="request_head[cmenu_head].label" readonly/></strong></i-col>
-    </Row>
-
-    <Row v-if="tab_current==='tab_post'">
-        <i-col span="3"><div align="center">POST URL</div></i-col>
-        <i-col span="18"><i-input value="/apijson/post" readonly/></i-col>
-    </Row>
-    <Row v-if="tab_current==='tab_post'">
-        <i-col span="3"><div align="center">example name</div></i-col>
-        <i-col span="18"><strong><i-input :value="request_post[cmenu_post].label" readonly/></strong></i-col>
-    </Row>
-
-    <Row v-if="tab_current==='tab_put'">
-        <i-col span="3"><div align="center">PUT URL</div></i-col>
-        <i-col span="18"><i-input value="/apijson/put" readonly/></i-col>
-    </Row>
-    <Row v-if="tab_current==='tab_put'">
-        <i-col span="3"><div align="center">example name</div></i-col>
-        <i-col span="18"><strong><i-input :value="request_put[cmenu_put].label" readonly/></strong></i-col>
-    </Row>
-
-    <Row v-if="tab_current==='tab_delete'">
-        <i-col span="3"><div align="center">DELETE URL</div></i-col>
-        <i-col span="18"><i-input value="/apijson/delete" readonly/></i-col>
-    </Row>
-    <Row v-if="tab_current==='tab_delete'">
-        <i-col span="3"><div align="center">example name</div></i-col>
-        <i-col span="18"><strong><i-input :value="request_delete[cmenu_delete].label" readonly/></strong></i-col>
-    </Row>
-
-    <Row>
-        <i-col span="3"><div align="center">request data</div></i-col>
-        <i-col span="18"><i-input v-model="request_data" type="textarea" :autosize="{minRows: 3,maxRows: 15}" placeholder="request data" /></i-col>
-        <i-col span="1"><div align="center"><i-button type="primary" size="large" @click="post_request_data" v-bind:disabled="!can_post">Post</i-button></div></i-col>
-    </Row>
-    <Row>
-        <i-col span="3"><div align="center">response data</div></i-col>
-        <i-col span="18"><i-input v-model="response_data" type="textarea" readonly :autosize="{minRows: 5,maxRows: 30}" /></i-col>
-    </Row>
-    </i-content>
-    </layout>
-</div>
-</div>
+{{block mainapp_vue}}
 <script>
 var vm = new Vue({
-    el: '#app',
+    el: '#mainapp',
     delimiters: ['{', '}'],
     data: {
         request_get : {{<<request_get_json}},
@@ -204,8 +196,8 @@ var vm = new Vue({
                 }
             })
         },
-        login: function(){window.location.href="{{=url_for('uliweb_apps.login.views.login')}}"},
-        logout: function(){window.location.href="{{=url_for('uliweb_apps.login.views.logout')}}"}
+        login: function(){window.location.href="{{=url_for('uliweb_comapps.auth.login.views.login')}}"},
+        logout: function(){window.location.href="{{=url_for('uliweb_comapps.auth.login.views.logout')}}"}
     },
     watch: {
         request_data : function(n,o){
@@ -233,4 +225,4 @@ var vm = new Vue({
 })
 vm.init_default()
 </script>
-{{end content_main}}
+{{end mainapp_vue}}

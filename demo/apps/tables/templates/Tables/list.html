@@ -1,27 +1,31 @@
 {{extend "Tables/layout.html"}}
 
-{{block content_header_title}}<h1>apijson-table examples</h1>{{end content_header_title}}
+{{block title}}uliweb-apijson demo: tables{{end title}}
 
-{{block content_main}}
-{{use "ui.vue"}}
-{{use "ui.iview"}}
+{{block content_wrapper}}
 {{include "vue/inc_apijson_table.html"}}
-{{if role!="ADMIN":}}
-<div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_apps.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
-{{pass #if}}
-<div id="app" class='box'>
-<div class="box-body">
-    <tabs v-model:value="tab_current" type="card">
-        <tab-pane v-for="item in tabs" :key="item" :label="item" :name="item">
-            <apijson-table :model_name="item" :config="apijson_tables[item]"></apijson-table>
-        </tab-pane>
-    </tabs>
-</div>
-</div>
+<card>
+    <div style="min-height: 600px;">
+        {{if role!="ADMIN":}}
+        <div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_apps.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
+        {{pass #if}}
+        <div id="app" class='box'>
+        <div class="box-body">
+            <tabs v-model:value="tab_current" type="card">
+                <tab-pane v-for="item in tabs" :key="item" :label="item" :name="item">
+                    <apijson-table :model_name="item" :config="apijson_tables[item]"></apijson-table>
+                </tab-pane>
+            </tabs>
+        </div>
+        </div>
+    </div>
+</card>
+{{end content_wrapper}}
 
+{{block mainapp_vue}}
 <script>
 var vm = new Vue({
-    el: '#app',
+    el: '#mainapp',
     delimiters: ['{', '}'],
     data:{
         tab_current: null,
@@ -30,4 +34,4 @@ var vm = new Vue({
     }
 })
 </script>
-{{end content_main}}
+{{end mainapp_vue}}
