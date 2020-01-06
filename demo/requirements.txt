@@ -1,10 +1,6 @@
 six
 SQLAlchemy
 uliweb3
-uliweb-ui
-uliweb-layout
-uliweb-menu
-uliweb-apps
-uliweb-comapps
 uliweb-comui
+uliweb-comapps
 uliweb-apijson
