@@ -7,7 +7,7 @@
 <card>
     <div style="min-height: 600px;">
         {{if role!="ADMIN":}}
-        <div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_apps.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
+        <div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_comapps.auth.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
         {{pass #if}}
         <div id="app" class='box'>
         <div class="box-body">

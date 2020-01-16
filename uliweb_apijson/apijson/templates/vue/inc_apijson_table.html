@@ -8,7 +8,8 @@ Vue.component('apijson-table', {
         "custom_tcolumns_render_generator",
         "hook_init", //hook_init(vm), will invoke in mounted()
         "hook_ajax_params", //hook_ajax_params(method,action,params), will invoke before ajax action
-        "hook_add" //hook_add(vm), customize the add action
+        "hook_add", //hook_add(vm), customize the add action
+        "hook_viewedit" //hook_viewedit(vm), customize the add action
     ],
     template: `<div>
     <div v-if="config_editable && config_add_fields!=null"><i-button type="primary" @click="add">Add</i-button> <br><br> </div>
@@ -16,7 +17,7 @@ Vue.component('apijson-table', {
     <i-table stripe border :columns="tcolumns" :data="tlist" @on-sort-change="table_on_sort_change"></i-table>
     <page :total="total" :page-size="query_count" :current.sync="current_page" :page-size-opts="[10, 20, 50, 100]" show-sizer @on-change="page_on_change" @on-page-size-change="page_on_page_size_change"></page>
     <modal v-model="modal_add" title="Add">
-        <i-form @submit.native.prevent :label-width="80">
+        <i-form @submit.native.prevent :label-width="100">
             <form-item v-for="item in add_items" :key="item.key" :label="item.title">
                 <i-input v-if="item.component=='input'" v-model="item.value"></i-input>
                 <checkbox v-if="item.component=='checkbox'" v-model="item.value"></checkbox>
@@ -31,7 +32,7 @@ Vue.component('apijson-table', {
         </div>
     </modal>
     <modal v-model="modal_view" :title="viewedit_label">
-        <i-form @submit.native.prevent :label-width="80">
+        <i-form @submit.native.prevent :label-width="100">
             <form-item v-for="item in viewedit_items" :key="item.key" :label="item.title">
                 <i-input v-if="item.component=='input'" v-model="item.value" :readonly="!editable(item)"></i-input>
                 <checkbox v-if="item.component=='checkbox'" v-model="item.value" :disabled="!editable(item)"></checkbox>
@@ -246,6 +247,11 @@ Vue.component('apijson-table', {
             })
         },
         show: function(params){
+            if (this.hook_viewedit!=null) {
+                this.hook_viewedit(this)
+                return
+            }
+
             var row = params.row
             this.viewedit_items = []
             if (this.config_viewedit_fields!=null) {
