@@ -15,7 +15,7 @@ Vue.component('apijson-viewedit', {
         <i-input v-if="item.component=='input'" v-model="item.value" :readonly="!editable(item)"></i-input>
         <checkbox v-if="item.component=='checkbox'" v-model="item.value" :disabled="!editable(item)"></checkbox>
         <i-input v-if="item.component=='textarea'" v-model="item.value" type="textarea" :autosize="{minRows: 2,maxRows: 5}"></i-input>
-        {{block custom_viewedit_componet}}{{end custom_viewedit_componet}}
+        {{block custom_viewedit_component}}{{end custom_viewedit_component}}
     </form-item>
     <form-item v-if="config_editable" label="Action">
         <i-button type="info" icon="ios-download" size="large" @click="save">Save</i-button>
