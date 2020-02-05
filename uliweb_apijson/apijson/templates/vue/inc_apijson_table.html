@@ -248,7 +248,7 @@ Vue.component('apijson-table', {
         },
         show: function(params){
             if (this.hook_viewedit!=null) {
-                this.hook_viewedit(this)
+                this.hook_viewedit(this,params)
                 return
             }
 
