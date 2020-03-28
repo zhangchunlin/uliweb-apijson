@@ -9,7 +9,7 @@ Vue.component('apijson-table', {
         "hook_init", //hook_init(vm), will invoke in mounted()
         "hook_ajax_params", //hook_ajax_params(method,action,params), will invoke before ajax action
         "hook_add", //hook_add(vm), customize the add action
-        "hook_viewedit" //hook_viewedit(vm), customize the add action
+        "hook_viewedit" //hook_viewedit(vm, params), customize the view edit action
     ],
     template: `<div>
     <div v-if="config_editable && config_add_fields!=null"><i-button type="primary" @click="add">Add</i-button> <br><br> </div>
