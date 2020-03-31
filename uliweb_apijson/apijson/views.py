@@ -300,7 +300,7 @@ class ApiJson(object):
             nonlocal v
             if v and col.type.python_type==datetime:
                 _v = v
-                v = to_datetime(v,tzinfo=request.tzinfo if (request and hasattr(request,"tzinfo")) else None)
+                v = to_datetime(v,tzinfo=getattr(request,"tzinfo",None))
                 if v==None:
                     raise UliwebError("'%s' cannot convert to datetime"%(_v))
         if c1=='>':
