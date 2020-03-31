@@ -1,5 +1,5 @@
 #coding=utf-8
-from uliweb import expose, functions, models, UliwebError
+from uliweb import expose, functions, models, UliwebError, request
 from uliweb.orm import ModelNotFound
 from uliweb.utils._compat import string_types
 from uliweb.utils.date import to_datetime
@@ -300,7 +300,7 @@ class ApiJson(object):
             nonlocal v
             if v and col.type.python_type==datetime:
                 _v = v
-                v = to_datetime(v)
+                v = to_datetime(v,tzinfo=request.tzinfo)
                 if v==None:
                     raise UliwebError("'%s' cannot convert to datetime"%(_v))
         if c1=='>':
