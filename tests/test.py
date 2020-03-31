@@ -867,6 +867,45 @@ def test_apijson_get():
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}]}
 
+    >>> #query array, {} <= with datetime
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "date{}": "<='2018-11-02 00:00'"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 2, 'date': '2018-11-01 00:00:00', 'content': 'test moment', 'picture_list': '[]', 'id': 1}}, {'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}]}
+
+    >>> #query array, {} >= with datetime
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "date{}": ">='2018-11-02 00:00'"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'moment': {'user_id': 3, 'date': '2018-11-02 00:00:00', 'content': 'test moment from b', 'picture_list': '[]', 'id': 2}}, {'moment': {'user_id': 4, 'date': '2018-11-06 00:00:00', 'content': 'test moment from c', 'picture_list': '[]', 'id': 3}}]}
+
+    >>> #query array, {} >= with a invalid datetime
+    >>> data ='''{
+    ... "[]":{
+    ...         "moment": {
+    ...             "date{}": ">='2018-11-42 00:00'"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': "''2018-11-42 00:00'' cannot convert to datetime"}
+
     >>> #query array, !{} <
     >>> data ='''{
     ... "[]":{
@@ -950,6 +989,21 @@ def test_apijson_get():
     >>> d = json_loads(r.data)
     >>> print(d)
     {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'userb', 'nickname': 'User B', 'id': 3}}, {'user': {'username': 'userc', 'nickname': 'User C', 'id': 4}}]}
+
+    >>> #query array, &{} condition list
+    >>> data ='''{
+    ... "[]":{
+    ...         "user": {
+    ...             "@role": "ADMIN",
+    ...             "date_join&{}": ">='2018-1-1 00:00',<='2018-2-2 00:00'",
+    ...             "@column": "username,nickname,id,date_join"
+    ...         }
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'user': {'username': 'admin', 'nickname': 'Administrator', 'date_join': '2018-01-01 00:00:00', 'id': 1}}, {'user': {'username': 'usera', 'nickname': 'User A', 'date_join': '2018-02-02 00:00:00', 'id': 2}}]}
 
     >>> #query array, {} multiple condition to a same field
     >>> data ='''{

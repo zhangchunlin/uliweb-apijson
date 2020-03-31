@@ -2,11 +2,13 @@
 from uliweb import expose, functions, models, UliwebError
 from uliweb.orm import ModelNotFound
 from uliweb.utils._compat import string_types
+from uliweb.utils.date import to_datetime
 from sqlalchemy.sql import and_, or_, not_
 from json import loads
 from collections import OrderedDict
 import logging
 import traceback
+from datetime import datetime
 from . import ApiJsonModelQuery
 
 log = logging.getLogger('apijson')
@@ -274,7 +276,7 @@ class ApiJson(object):
                     return fcond
                 elif len(cond_list)>1:
                     fcond = self._get_filter_condition_from_str(col,cond_list[0])
-                    for c in cond_list:
+                    for c in cond_list[1:]:
                         fc = self._get_filter_condition_from_str(col,c)
                         if operator=="&":
                             fcond = and_(fcond,fc)
@@ -293,20 +295,40 @@ class ApiJson(object):
     def _get_filter_condition_from_str(self,col,cond_str):
         cond_str = cond_str.strip()
         c1,c2 = cond_str[0],cond_str[1]
+        v = None
+        def _conver():
+            nonlocal v
+            if v and col.type.python_type==datetime:
+                _v = v
+                v = to_datetime(v)
+                if v==None:
+                    raise UliwebError("'%s' cannot convert to datetime"%(_v))
         if c1=='>':
             if c2=="=":
-                return col >= cond_str[2:]
+                v = cond_str[2:]
+                _conver()
+                return col >= v
             else:
+                v = cond_str[1:]
+                _conver()
                 return col > cond_str[1:]
         elif c1=='<':
             if c2=="=":
-                return col <= cond_str[2:]
+                v = cond_str[2:]
+                _conver()
+                return col <= v
             else:
-                return col < cond_str[1:]
+                v = cond_str[1:]
+                _conver()
+                return col < v
         elif c1=="=":
-            return col == cond_str[1:]
+            v = cond_str[1:]
+            _conver()
+            return col == v
         elif c1=="!" and c2=="=":
-            return col != cond_str[2:]
+            v = cond_str[2:]
+            _conver()
+            return col != v
         raise UliwebError("not support '%s'"%(cond_str))
 
     def head(self):
