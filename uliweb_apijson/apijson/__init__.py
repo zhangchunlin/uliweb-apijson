@@ -174,7 +174,8 @@ class ApiJsonModelQuery(object):
         return q
 
     def _get_info(self,i,as_dict_child=False):
-        
+        if (not i):
+            return {}
         d = i.to_dict()
         if self.secret_fields:
             for k in self.secret_fields:
