@@ -28,6 +28,13 @@ class Comment(Model):
     date = Field(datetime.datetime, auto_now_add=True)
     content = Field(TEXT)
 
+class Comment2(Model):
+    user_id = Reference("user")
+    to_id = Reference("user")
+    moment_id = Reference("moment")
+    date = Field(datetime.datetime, auto_now_add=True)
+    content = Field(TEXT)
+
 class PublicNotice(Model):
     date = Field(datetime.datetime, auto_now_add=True)
     content = Field(TEXT)

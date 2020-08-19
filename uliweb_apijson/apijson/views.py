@@ -111,26 +111,39 @@ class ApiJson(object):
         if not GET:
             return json({"code":400,"msg":"'%s' not accessible"%(model_name)})
 
+        user = getattr(request,"user", None)
         roles = GET.get("roles")
         permission_check_ok = False
-        if not params_role:
-            if hasattr(request,"user") and request.user:
-                params_role = "LOGIN"
+        if roles:
+            if not params_role:
+                params_role = "LOGIN" if user else "UNKNOWN"
+            elif params_role != "UNKNOWN":
+                if not user:
+                    return json({"code":400,"msg":"no login user for role '%s'"%(params_role)})
+            if params_role not in roles:
+                return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
+            if params_role == "UNKNOWN":
+                permission_check_ok = True
+            elif functions.has_role(user,params_role):
+                permission_check_ok = True
             else:
-                params_role = "UNKNOWN"
-        elif params_role != "UNKNOWN":
-            if not (hasattr(request,"user") and request.user):
-                return json({"code":400,"msg":"no login user for role '%s'"%(params_role)})
-        if params_role not in roles:
-            return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
-        if params_role == "UNKNOWN":
-            permission_check_ok = True
-        elif functions.has_role(request.user,params_role):
-            permission_check_ok = True
-        else:
-            return json({"code":400,"msg":"user doesn't has role '%s'"%(params_role)})
+                return json({"code":400,"msg":"user doesn't has role '%s'"%(params_role)})
         if not permission_check_ok:
-            return json({"code":400,"msg":"no permission"})
+            perms = GET.get("permissions")
+            if perms:
+                if params_role:
+                    role, msg = functions.has_permission_as_role(user, params_role, *perms)
+                    if role:
+                        permission_check_ok = True
+                else:
+                    role = functions.has_permission(user, *perms)
+                    if role:
+                        role_name = getattr(role, "name")
+                        if role_name:
+                            permission_check_ok = True
+                            params_role = role_name
+        if not permission_check_ok:
+            return json({"code":400,"msg":"no permission to access the data"})
 
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
@@ -364,25 +377,35 @@ class ApiJson(object):
 
         roles = HEAD.get("roles")
         permission_check_ok = False
-        if not params_role:
-            if hasattr(request,"user") and request.user:
-                params_role = "LOGIN"
+        user = getattr(request, "user", None)
+        if roles:
+            if not params_role:
+                params_role = "LOGIN" if user else "UNKNOWN"
+            if params_role not in roles:
+                return json({"code":400,"msg":"role '%s' not have permission HEAD for '%s'"%(params_role,model_name)})
+            if functions.has_role(user, params_role):
+                permission_check_ok = True
             else:
-                params_role = "UNKNOWN"
-        if params_role not in roles:
-            return json({"code":400,"msg":"role '%s' not have permission HEAD for '%s'"%(params_role,model_name)})
-        if params_role == "UNKNOWN":
-            permission_check_ok = True
-        elif not (hasattr(request,"user") and request.user):
-            return json({"code":400,"msg":"no login user for role '%s'"%(params_role)})
-        elif functions.has_role(request.user,params_role):
-            permission_check_ok = True
+                return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
         else:
-            return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
+            perms = HEAD.get("permissions")
+            if perms:
+                if params_role:
+                    role, msg = functions.has_permission_as_role(user, params_role, *perms)
+                    if role:
+                        permission_check_ok = True
+                else:
+                    role = functions.has_permission(user, *perms)
+                    if role:
+                        role_name = getattr(role, "name")
+                        if role_name:
+                            permission_check_ok = True
+                            params_role = role_name
+
         #current implementation won't run here, but keep for safe
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
-
+        
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
@@ -394,7 +417,7 @@ class ApiJson(object):
                 param = params[n]
                 if not hasattr(model.c,n):
                     return  json({"code":400,"msg":"'%s' don't have field '%s'"%(model_name,n)})
-                q = model.filter(getattr(model.c,n)==param)
+                q = q.filter(getattr(model.c,n)==param)
         rdict = {
             "code":200,
             "msg":"success",
@@ -695,33 +718,23 @@ class ApiJson(object):
             return json({"code":400,"msg":"cannot find record id = '%s'"%(id_)})
 
         permission_check_ok = False
+        msg = "'%s' not accessible by user"%(model_name)
         DELETE = model_setting.get("DELETE")
         if DELETE:
             roles = DELETE.get("roles")
-            if params_role:
-                if not params_role in roles:
-                    return json({"code":400,"msg":"'%s' not accessible by role '%s'"%(model_name,params_role)})
-                roles = [params_role]
             if roles:
-                for role in roles:
-                    if role == "OWNER":
-                        if hasattr(request,"user") and request.user:
-                            if user_id_field:
-                                if obj.to_dict().get(user_id_field)==request.user.id:
-                                    permission_check_ok = True
-                                    break
-                        else:
-                            return json({"code":400,"msg":"need login user"})
-                    elif role == "UNKNOWN":
+                has, msg =  functions.has_obj_role(getattr(request,"user",None), obj, user_id_field, params_role, *roles)
+                if has:
+                    permission_check_ok = True
+            if not permission_check_ok:
+                perms = DELETE.get("permissions")
+                if perms:
+                    has, msg = functions.has_obj_permission(getattr(request,"user",None), obj, user_id_field, *perms)
+                    if has:
                         permission_check_ok = True
-                        break
-                    else:
-                        if functions.has_role(request.user,role):
-                            permission_check_ok = True
-                            break
 
         if not permission_check_ok:
-            return json({"code":400,"msg":"no permission"})
+            return json({"code":400,"msg":msg})
 
         try:
             obj.delete()

@@ -1153,7 +1153,7 @@ def test_apijson_head():
     >>> r = handler.post('/apijson/head', data=data, middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': "no login user for role 'ADMIN'"}
+    {'code': 400, 'msg': "user doesn't have role 'ADMIN'"}
 
     >>> #apijson head, without user and @role
     >>> data ='''{
@@ -1581,7 +1581,7 @@ def test_apijson_delete():
     >>> print(d)
     {'code': 400, 'msg': "model 'nonexist' not found"}
 
-    >>> #apijson delete, default to OWNER and delete other's record
+    >>> #apijson delete, try to delete other's moment
     >>> data ='''{
     ...     "moment": {
     ...         "id": 2
@@ -1591,7 +1591,7 @@ def test_apijson_delete():
     >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': 'no permission'}
+    {'code': 400, 'msg': 'no role to access the data'}
 
     >>> #apijson delete, without id
     >>> data ='''{
@@ -1647,7 +1647,7 @@ def test_apijson_delete():
     >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("usera"), middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': "'moment' not accessible by role 'UNKNOWN'"}
+    {'code': 400, 'msg': "role 'UNKNOWN' has no permission to access the data"}
 
     >>> #apijson delete, with OWNER but not login
     >>> data ='''{
@@ -1667,7 +1667,7 @@ def test_apijson_delete():
     >>> r = handler.post('/apijson/delete', data=data, middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': 'need login user'}
+    {'code': 400, 'msg': 'no role to access the data'}
 
     >>> #apijson delete, with UNKNOWN role
     >>> data ='''{
@@ -1701,5 +1701,101 @@ def test_apijson_delete():
     >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("admin"), middlewares=[])
     >>> d = json_loads(r.data)
     >>> print(d)
-    {'code': 400, 'msg': "'moment' not accessible by role 'superuser'"}
+    {'code': 400, 'msg': "role 'superuser' has no permission to access the data"}
+    """
+
+def test_apijson_permission():
+    """
+    >>> application = make_simple_application(project_dir='.')
+    >>> handler = application.handler()
+
+    >>> #apijson get, query with id, access with owner
+    >>> data ='''{
+    ... "comment2":{
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'user_id': 1, 'to_id': 3, 'moment_id': 1, 'date': '2018-11-01 00:00:00', 'content': 'comment from admin', 'id': 1}}
+
+    >>> #apijson get, query with id, access other's comment, expect empty result
+    >>> data ='''{
+    ... "comment2":{
+    ...         "id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("userb"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': None}
+
+    >>> #apijson get, query array
+    >>> data ='''{
+    ... "comment2":{
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("usera"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'user_id': 2, 'to_id': 3, 'moment_id': 1, 'date': '2018-12-01 00:00:00', 'content': 'comment from usera to userb', 'id': 2}}
+
+    >>> #apijson get, query one with admin as OWNER
+    >>> data ='''{
+    ... "comment2":{
+    ...        "@role":"OWNER"
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'user_id': 1, 'to_id': 3, 'moment_id': 1, 'date': '2018-11-01 00:00:00', 'content': 'comment from admin', 'id': 1}}
+
+    >>> #apijson get, query one with admin as ADMIN
+    >>> data ='''{
+    ... "comment2":{
+    ...        "@role":"ADMIN",
+    ...        "user_id": 2
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'user_id': 2, 'to_id': 3, 'moment_id': 1, 'date': '2018-12-01 00:00:00', 'content': 'comment from usera to userb', 'id': 2}}
+
+    >>> #apijson head
+    >>> data ='''{
+    ...     "comment2": {
+    ...         "user_id": 1
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/head', data=data, pre_call=pre_call_as("userc"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'code': 200, 'msg': 'success', 'count': 0}}
+
+    >>> #apijson delete with a user which have no permission
+    >>> data ='''{
+    ...     "comment2": {
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "comment2"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("userc"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 400, 'msg': 'no permission'}
+
+    >>> #apijson delete with permission, ADMIN
+    >>> data ='''{
+    ...     "comment2": {
+    ...         "id": 1
+    ...     },
+    ...     "@tag": "comment2"
+    ... }'''
+    >>> r = handler.post('/apijson/delete', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', 'comment2': {'id': 1, 'code': 200, 'message': 'success', 'count': 1}}
     """

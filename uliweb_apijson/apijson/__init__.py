@@ -260,3 +260,71 @@ class ApiJsonModelQuery(object):
                 params.update(refs)
             q = self._get_array_q(params)
             item[self.name] = self._get_info(q.one())
+
+def is_obj_owner(user, obj, user_id_field):
+    if user and user_id_field:
+        return obj.to_dict().get(user_id_field)==user.id
+    return False
+
+def has_obj_role(user, obj, user_id_field, as_role, *roles):
+    from uliweb import  functions
+    if as_role:
+        if as_role not in roles:
+            return False, "role '%s' has no permission to access the data"%(as_role)
+        if not functions.has_role(user, as_role):
+            return False, "user has no role '%s'"%(as_role)
+        if as_role == "OWNER":
+            if not is_obj_owner(user, obj, user_id_field):
+                return False, "user is not the owner of data"
+        return True, None
+    else:
+        for role in roles:
+            if functions.has_role(user, role):
+                if isinstance(role,str):
+                    role_name = role
+                elif hasattr(role, "name"):
+                    role_name = role.name
+                else:
+                    continue
+                if role_name == "OWNER":
+                    if is_obj_owner(user, obj, user_id_field):
+                        return True, None
+                    else:
+                        continue
+                else:
+                    return True, None
+        return False, "no role to access the data"
+
+def has_obj_permission(user, obj, user_id_field, *perms):
+    from uliweb import  functions, models
+
+    Role = models.role
+    Perm = models.permission
+
+    for name in perms:
+        perm = Perm.get(Perm.c.name == name)
+        if not perm:
+            continue
+        has, msg = functions.has_obj_role(user, obj, user_id_field, None, *list(perm.perm_roles.with_relation().all()))
+        if has:
+            return has, None
+    return False, "no permission"
+
+def has_permission_as_role(user, as_role, *perms):
+    from uliweb import  functions, models
+
+    Role = models.role
+    Perm = models.permission
+
+    flag = functions.has_role(user, as_role)
+    if not flag:
+        return False, "user has no role '%s'"%(as_role)
+
+    for name in perms:
+        perm = Perm.get(Perm.c.name==name)
+        if not perm:
+            continue
+        for role in perm.perm_roles.with_relation().all():
+            if role.name == as_role:
+                return role, None
+    return False, "no permission"

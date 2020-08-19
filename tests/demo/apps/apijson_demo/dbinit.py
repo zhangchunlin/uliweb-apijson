@@ -7,6 +7,7 @@ set_dispatch_send(False)
 User = models.user
 Privacy = models.privacy
 Comment = models.comment
+Comment2 = models.comment2
 Moment = models.moment
 PublicNotice = models.publicnotice
 
@@ -95,21 +96,21 @@ comment_list = [
         "to_username" : "userb",
         "moment_id" : 1,
         "date" : "2018-12-1",
-        "content" : "comment haha",
+        "content" : "comment from usera to userb",
     },
     {
         "username" : "userb",
         "to_username" : "usera",
         "moment_id" : 2,
         "date" : "2018-12-2",
-        "content" : "comment xixi",
+        "content" : "comment from userb to usera",
     },
     {
         "username" : "userc",
         "to_username" : "usera",
         "moment_id" : 3,
         "date" : "2018-12-9",
-        "content" : "comment hoho",
+        "content" : "comment from userc to usera",
     },
 ]
 
@@ -158,6 +159,7 @@ for d in comment_list:
         d["to_id"] = User.get(User.c.username==d["to_username"]).id
         print("create comment record for user '%s'"%(d["username"]))
         Comment(**d).save()
+        Comment2(**d).save()
     else:
         print("error: unknown user '%s'"%(d["username"]))
 
