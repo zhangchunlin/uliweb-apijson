@@ -88,23 +88,39 @@ class ApiJsonModelQuery(object):
     
         roles = GET.get("roles")
         params_role = self.params.get("@role")
-        
-        if not params_role:
-            if hasattr(request,"user"):
-                params_role = "LOGIN"
+        user = getattr(request, "user", None)
+
+        if roles:
+            if not params_role:
+                if user:
+                    params_role = "LOGIN"
+                else:
+                    params_role = "UNKNOWN"
+            elif params_role != "UNKNOWN":
+                if not user:
+                    raise UliwebError("no login user for role '%s'" % (params_role))
+            if params_role not in roles:
+                raise UliwebError("'%s' not accessible by role '%s'" % (self.name, params_role))
+            if params_role == "UNKNOWN":
+                self.permission_check_ok = True
+            elif functions.has_role(user, params_role):
+                self.permission_check_ok = True
             else:
-                params_role = "UNKNOWN"
-        elif params_role != "UNKNOWN":
-            if not hasattr(request,"user"):
-                raise UliwebError("no login user for role '%s'"%(params_role))
-        if params_role not in roles:
-            raise UliwebError("'%s' not accessible by role '%s'"%(self.name,params_role))
-        if params_role == "UNKNOWN":
-            self.permission_check_ok = True
-        elif functions.has_role(request.user,params_role):
-            self.permission_check_ok = True
-        else:
-            raise UliwebError("user doesn't have role '%s'"%(params_role))
+                raise UliwebError("user doesn't have role '%s'" % (params_role))
+        if not self.permission_check_ok:
+            perms = GET.get("permissions")
+            if perms:
+                if params_role:
+                    role, msg = functions.has_permission_as_role(user, params_role, *perms)
+                    if role:
+                        self.permission_check_ok = True
+                else:
+                    role = functions.has_permission(user, *perms)
+                    if role:
+                        role_name = getattr(role, "name")
+                        if role_name:
+                            self.permission_check_ok = True
+                            params_role = role_name
 
         if not self.permission_check_ok:
             raise UliwebError("no permission")

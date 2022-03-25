@@ -1764,6 +1764,17 @@ def test_apijson_permission():
     >>> print(d)
     {'code': 200, 'msg': 'success', 'comment2': {'user_id': 2, 'to_id': 3, 'moment_id': 1, 'date': '2018-12-01 00:00:00', 'content': 'comment from usera to userb', 'id': 2}}
 
+    >>> #apijson get, query array
+    >>> data ='''{
+    ... "[]":{
+    ...         "comment2": {"@role":"ADMIN"}
+    ...     }
+    ... }'''
+    >>> r = handler.post('/apijson/get', data=data, pre_call=pre_call_as("admin"), middlewares=[])
+    >>> d = json_loads(r.data)
+    >>> print(d)
+    {'code': 200, 'msg': 'success', '[]': [{'comment2': {'user_id': 1, 'to_id': 3, 'moment_id': 1, 'date': '2018-11-01 00:00:00', 'content': 'comment from admin', 'id': 1}}, {'comment2': {'user_id': 2, 'to_id': 3, 'moment_id': 1, 'date': '2018-12-01 00:00:00', 'content': 'comment from usera to userb', 'id': 2}}, {'comment2': {'user_id': 3, 'to_id': 2, 'moment_id': 2, 'date': '2018-12-02 00:00:00', 'content': 'comment from userb to usera', 'id': 3}}, {'comment2': {'user_id': 4, 'to_id': 2, 'moment_id': 3, 'date': '2018-12-09 00:00:00', 'content': 'comment from userc to usera', 'id': 4}}]}
+
     >>> #apijson head
     >>> data ='''{
     ...     "comment2": {
