@@ -1,0 +1,74 @@
+<script>
+    Vue.component('table-config', {
+        delimiters: ['{', '}'],
+        props: [
+            "table",
+            "tableui",
+            "model",
+            "request"
+        ],
+        // https://stackoverflow.com/questions/7717929/how-do-i-get-pre-style-overflow-scroll-height-150px-to-display-at-parti
+        template: `<div>
+    <row>
+        <i-col span="4">
+            <i-menu :active-name="current_menu_item" @on-select="on_select">
+                <menu-item name="table_config" @on-select="current_menu_item='table_config'">table config</menu-item>
+                <menu-item name="tableui_config" @on-select="current_menu_item='tableui_config'">table ui config</menu-item>
+                <menu-item name="model_config" @on-select="current_menu_item='model_config'">model config</menu-item>
+                <menu-item name="request_config" @on-select="current_menu_item='request_config'">request config</menu-item>
+            </i-menu>
+        </i-col>
+        <i-col span="8">
+            <div v-if="current_menu_item=='table_config'">
+                <h3>settings.APIJSON_TABLES.{table.table_name}</h3>
+                <pre>
+{table_json}
+                </pre>
+            </div>
+            <div v-if="current_menu_item=='tableui_config'">
+                <h3>settings.APIJSON_TABLE_UI.{table.tableui_name}</h3>
+                <pre style="height: 25pc; overflow-y: scroll;">
+{tableui_json}
+            </pre>
+            </div>
+            <div v-if="current_menu_item=='model_config'">
+                <h3>settings.APIJSON_MODELS.{table.model_name}</h3>
+                <pre style="height: 25pc; overflow-y: scroll;">
+{model_json}
+                </pre>
+            </div>
+            <div v-if="current_menu_item=='request_config'">
+                <h3>settings.APIJSON_TABLE_CONFIG.{table.request_tag||table.model_name}</h3>
+                <pre style="height: 25pc; overflow-y: scroll;">
+{request_json}
+                </pre>
+            </div>
+        </i-col>
+    </row>
+</div>`,
+        data: function(){
+            return {
+                current_menu_item: "table_config"
+            }
+        },
+        computed: {
+            table_json: function(){
+                return JSON.stringify(this.table, null, 2)
+            },
+            tableui_json: function(){
+                return JSON.stringify(this.tableui, null, 2)
+            },
+            model_json: function(){
+                return JSON.stringify(this.model, null, 2)
+            },
+            request_json: function(){
+                return JSON.stringify(this.request, null, 2)
+            },
+        },
+        methods: {
+            on_select: function(data){
+                this.current_menu_item = data
+            }
+        }
+    })
+</script>

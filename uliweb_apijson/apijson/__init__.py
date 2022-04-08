@@ -2,57 +2,76 @@
 
 from uliweb import settings, models, request, functions, UliwebError
 from uliweb.orm import ModelNotFound
+from json import dumps as json_dumps
 import logging
 
 log = logging.getLogger('apijson')
 
-def get_apijson_tables(role="UNKNOWN"):
-    from uliweb import settings
 
-    s = settings.APIJSON_TABLES
-    if s:
-        apijson_tables = dict(s.iteritems())
-    else:
-        return {}
-    for n in apijson_tables:
-        c = apijson_tables[n]
-        editable = c.get("editable",False)
-        _model_name = c.get("@model_name") or n
-        if editable=="auto":
+class ApijsonTable(object):
+    def __init__(self, model_name, request_tag=None, role=None, tableui_name=None, table_name=None):
+        self.model_name = model_name
+        self.request_tag = request_tag or self.model_name
+        self.role = role
+        self.tableui_name = tableui_name or self.model_name
+        self.table_name = table_name
+        self._get_tableui()
+        self._apply_auto()
+
+    def _get_tableui(self):
+        self.tableui = settings.APIJSON_TABLE_UI.get(self.tableui_name, {})
+        if not self.tableui:
+            log.warn("cannot find setting for {} in settings.APIJSON_TABLE_UI".format(self.tableui_name))
+
+    def _apply_auto(self):
+        editable = self.tableui.get("editable", False)
+        if editable == "auto":
             editable = False
-            POST = settings.APIJSON_MODELS.get(_model_name,{}).get("POST")
+            POST = settings.APIJSON_MODELS.get(self.model_name, {}).get("POST")
             if POST:
                 roles = POST["roles"]
                 if roles:
-                    editable = role in roles
-            c["editable"] = editable
-    return apijson_tables
+                    editable = self.role in roles
+            self.tableui["editable"] = editable
 
-def get_apijson_table(role="UNKNOWN",name=None):
-    from uliweb import settings
+    def to_dict(self):
+        return dict(model_name=self.model_name,
+                    request_tag=self.request_tag,
+                    role=self.role,
+                    tableui_name=self.tableui_name,
+                    table_name=self.table_name,
+                    tableui=self.tableui)
 
-    if not name:
-        return {}
-    s = settings.APIJSON_TABLES
-    if s:
-        apijson_tables = dict(s.iteritems())
-    else:
-        return {}
-    
-    c = apijson_tables.get(name)
-    if not c:
-        return {}
-    editable = c.get("editable",False)
-    _model_name = c.get("@model_name") or n
-    if editable=="auto":
-        editable = False
-        POST = settings.APIJSON_MODELS.get(_model_name,{}).get("POST")
-        if POST:
-            roles = POST["roles"]
-            if roles:
-                editable = role in roles
-        c["editable"] = editable
-    return c
+
+def get_apijson_tables():
+    def iter_table():
+        s = settings.APIJSON_TABLES
+        apijson_tables = dict(s.iteritems()) if s else {}
+        if apijson_tables:
+            for k in apijson_tables:
+                v = apijson_tables[k]
+                model_name = v.get("model_name") or k
+                tableui_name = v.get("tableui_name") or model_name
+                if not model_name:
+                    model_name = tableui_name
+                if model_name and tableui_name:
+                    request_tag = v.get("request_tag")
+                    role = v.get("role")
+                    yield(ApijsonTable(model_name=model_name, request_tag=request_tag, role=role, tableui_name=tableui_name, table_name=k))
+        else:
+            apison_table_ui = dict(
+                settings.APIJSON_TABLE_UI.iteritems())
+            for tableui_name in apison_table_ui:
+                tableui = apison_table_ui[tableui_name]
+                model_name = tableui.get("@model_name") or tableui_name
+                request_tag = model_name
+                role = None
+                yield(ApijsonTable(model_name=model_name, request_tag=request_tag, role=role, tableui_name=tableui_name))
+    return list(iter_table())
+
+
+def get_apijson_table(*args, **kwargs):
+    return ApijsonTable(*args, **kwargs)
 
 class ApiJsonModelQuery(object):
     def __init__(self,name,params,parent,key):

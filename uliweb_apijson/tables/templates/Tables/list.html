@@ -1,0 +1,57 @@
+{{extend "Tables/layout.html"}}
+
+{{block title}}uliweb-apijson: tables{{end title}}
+
+{{block other_use}}
+{{include "vue/inc_apijson_table.html"}}
+{{include "Tables/inc/table_config.html"}}
+{{end other_use}}
+
+{{block content_wrapper}}
+<card>
+    <div style="min-height: 600px;">
+        {{if role!="ADMIN":}}
+        <div class="alert alert-warning" role="alert">You should <a class="btn btn-primary btn-sm" href="{{=url_for('uliweb_comapps.auth.login.views.login')}}" role="button">login</a> with user <strong>admin</strong> to view all the tables</div>
+        {{pass #if}}
+        <div id="app" class='box'>
+        <div class="box-body">
+            <tabs v-model:value="tab_current" type="card">
+                <tab-pane v-for="item in tabs" :key="item.index" :label="item.name" :name="item.name">
+                    <table-config :table="item.table" :tableui="item.tableui" :model="item.model" :request="item.request"></table-config>
+                    <divider plain></divider>
+                    <apijson-table :table="item.table"></apijson-table>
+                </tab-pane>
+            </tabs>
+        </div>
+        </div>
+    </div>
+</card>
+{{end content_wrapper}}
+
+{{block mainapp_vue}}
+<script>
+var vm = new Vue({
+    el: '#mainapp',
+    delimiters: ['{', '}'],
+    data:{
+        tab_current: null,
+        apijson_tables: {{=apijson_tables_json}},
+        models: {{=models_json}},
+        requests: {{=requests_json}}
+    },
+    computed: {
+        tabs: function(){
+            var l = []
+            for (var i = 0; i < this.apijson_tables.length; i++) {
+                var t = this.apijson_tables[i]
+                var tableui = t.tableui
+                var table = JSON.parse(JSON.stringify(t))
+                delete table.tableui
+                l.push({index:i, name:t.config_name||t.model_name, table: table, tableui: tableui, model: this.models[i], request: this.requests[i]})
+            }
+            return l
+        }
+    }
+})
+</script>
+{{end mainapp_vue}}

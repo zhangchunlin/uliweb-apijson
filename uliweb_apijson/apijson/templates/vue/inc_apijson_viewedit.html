@@ -2,10 +2,8 @@
 Vue.component('apijson-viewedit', {
     delimiters: ['{', '}'],
     props: [
-        "model_name",
-        "request_tag",
+        "table",
         "id",
-        "config",
         "hook_init",
         "hook_ajax_params"
     ],
@@ -25,8 +23,6 @@ Vue.component('apijson-viewedit', {
 </div>`,
     data: function(){
         return {
-            l_request_tag: null,
-            role: "{{=role or ''}}",
             loading: false,
             row: {},
             row_saved: {},
@@ -43,10 +39,11 @@ Vue.component('apijson-viewedit', {
             var model_params = {
                 "id":this.id
             }
-            if (this.role!='') {
-                model_params["@role"] = this.role
+            var role = this.table.role
+            if (role!=null && role!='') {
+                model_params["@role"] = role
             }
-            params[this.model_name] = model_params
+            params[this.table.model_name] = model_params
             var thisp = this
             $.ajax({
                 type: "POST",
@@ -56,7 +53,7 @@ Vue.component('apijson-viewedit', {
                 success: function (data) {
                     thisp.loading = false
                     if (data.code==200) {
-                        thisp.row = data[thisp.model_name]
+                        thisp.row = data[thisp.table.model_name]
                         thisp.row_saved = thisp.row
                         thisp.viewedit_items = []
                         if (thisp.config_viewedit_fields!=null) {
@@ -84,7 +81,7 @@ Vue.component('apijson-viewedit', {
         },
         save: function(){
             var params = {
-                "@tag": this.l_request_tag
+                "@tag": this.table.request_tag
             }
             var record_params = {}
             //only save modified fields
@@ -95,10 +92,11 @@ Vue.component('apijson-viewedit', {
                     this.row[d.key] = d.value
                 }
             }
-            if (this.role!='') {
-                record_params["@role"] = this.role
+            var role = this.table.role
+            if (role!=null && role!='') {
+                record_params["@role"] = role
             }
-            params[this.l_request_tag] = record_params
+            params[this.table.request_tag] = record_params
             params = this.ajax_hook("apijson_put","update",params)
             var thisp = this
             $.ajax({
@@ -110,13 +108,13 @@ Vue.component('apijson-viewedit', {
                     if (data.code==200){
                         thisp.row_saved = thisp.row
                         thisp.$Notice.success({
-                            title: 'success update #'+thisp.row.id+' in table '+thisp.model_name,
+                            title: 'success update #'+thisp.row.id+' in table '+thisp.table.model_name,
                             desc: data.msg
                         })
                     }
                     else {
                         thisp.$Notice.error({
-                            title: 'error when update #'+thisp.row.id+' in table '+thisp.model_name,
+                            title: 'error when update #'+thisp.row.id+' in table '+thisp.table.model_name,
                             desc: data.msg
                         })
                     }
@@ -137,20 +135,14 @@ Vue.component('apijson-viewedit', {
         }
     },
     mounted: function(){
-        if (this.request_tag==null) {
-            this.l_request_tag = this.model_name
-        }
-        else {
-            this.l_request_tag = this.request_tag
-        }
         //if not do this, the first notice will hide behind the navigation bar in uliweb apps
         this.$Notice.config({top: 100,duration: 8});
         if (this.hook_init!=null) {
             this.hook_init(this)
         }
-        if (this.config!=null){
-            this.config_editable = this.config.editable || false
-            this.config_viewedit_fields = this.config.viewedit_fields || null
+        if (this.table.tableui!=null){
+            this.config_editable = this.table.tableui.editable || false
+            this.config_viewedit_fields = this.table.tableui.viewedit_fields || null
         }
         this.init_viewedit()
     }

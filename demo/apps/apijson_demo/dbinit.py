@@ -75,6 +75,11 @@ moment_list = [
         "date" : "2018-11-6",
         "content" : "test moment from c",
     },
+    {
+        "username" : "admin",
+        "date" : "2018-11-7",
+        "content" : "test moment from admin",
+    },
 ]
 
 comment_list = [
@@ -98,6 +103,13 @@ comment_list = [
         "moment_id" : 3,
         "date" : "2018-12-9",
         "content" : "comment hoho",
+    },
+    {
+        "username" : "admin",
+        "to_username" : "usera",
+        "moment_id" : 4,
+        "date" : "2018-12-10",
+        "content" : "comment kaka",
     },
 ]
 
