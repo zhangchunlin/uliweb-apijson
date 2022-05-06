@@ -43,11 +43,8 @@ var vm = new Vue({
         tabs: function(){
             var l = []
             for (var i = 0; i < this.apijson_tables.length; i++) {
-                var t = this.apijson_tables[i]
-                var tableui = t.tableui
-                var table = JSON.parse(JSON.stringify(t))
-                delete table.tableui
-                l.push({index:i, name:t.config_name||t.model_name, table: table, tableui: tableui, model: this.models[i], request: this.requests[i]})
+                var table = this.apijson_tables[i]
+                l.push({index: i, name: table.tableui_name, table: table, model: this.models[i], request: this.requests[i]})
             }
             return l
         }

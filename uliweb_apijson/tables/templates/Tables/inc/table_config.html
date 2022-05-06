@@ -3,7 +3,6 @@
         delimiters: ['{', '}'],
         props: [
             "table",
-            "tableui",
             "model",
             "request"
         ],
@@ -12,15 +11,14 @@
     <row>
         <i-col span="4">
             <i-menu :active-name="current_menu_item" @on-select="on_select">
-                <menu-item name="table_config" @on-select="current_menu_item='table_config'">table config</menu-item>
+                <menu-item name="table_param" @on-select="current_menu_item='table_param'">table param</menu-item>
                 <menu-item name="tableui_config" @on-select="current_menu_item='tableui_config'">table ui config</menu-item>
                 <menu-item name="model_config" @on-select="current_menu_item='model_config'">model config</menu-item>
                 <menu-item name="request_config" @on-select="current_menu_item='request_config'">request config</menu-item>
             </i-menu>
         </i-col>
         <i-col span="8">
-            <div v-if="current_menu_item=='table_config'">
-                <h3>settings.APIJSON_TABLES.{table.table_name}</h3>
+            <div v-if="current_menu_item=='table_param'">
                 <pre>
 {table_json}
                 </pre>
@@ -38,7 +36,7 @@
                 </pre>
             </div>
             <div v-if="current_menu_item=='request_config'">
-                <h3>settings.APIJSON_TABLE_CONFIG.{table.request_tag||table.model_name}</h3>
+                <h3>settings.APIJSON_REQUESTS.{table.request_tag||table.model_name}</h3>
                 <pre style="height: 25pc; overflow-y: scroll;">
 {request_json}
                 </pre>
@@ -48,12 +46,14 @@
 </div>`,
         data: function(){
             return {
-                current_menu_item: "table_config"
+                current_menu_item: "table_param",
+                table_param: {},
+                tableui: {}
             }
         },
         computed: {
             table_json: function(){
-                return JSON.stringify(this.table, null, 2)
+                return JSON.stringify(this.table_param, null, 2)
             },
             tableui_json: function(){
                 return JSON.stringify(this.tableui, null, 2)
@@ -69,6 +69,11 @@
             on_select: function(data){
                 this.current_menu_item = data
             }
+        },
+        mounted: function(){
+            this.table_param = JSON.parse(JSON.stringify(this.table))
+            delete this.table_param.tableui
+            this.tableui = this.table.tableui
         }
     })
 </script>

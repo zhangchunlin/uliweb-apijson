@@ -9,12 +9,11 @@ log = logging.getLogger('apijson')
 
 
 class ApijsonTable(object):
-    def __init__(self, model_name, request_tag=None, role=None, tableui_name=None, table_name=None):
+    def __init__(self, model_name, request_tag=None, role=None, tableui_name=None):
         self.model_name = model_name
         self.request_tag = request_tag or self.model_name
         self.role = role
         self.tableui_name = tableui_name or self.model_name
-        self.table_name = table_name
         self._get_tableui()
         self._apply_auto()
 
@@ -39,34 +38,19 @@ class ApijsonTable(object):
                     request_tag=self.request_tag,
                     role=self.role,
                     tableui_name=self.tableui_name,
-                    table_name=self.table_name,
                     tableui=self.tableui)
 
 
 def get_apijson_tables():
     def iter_table():
-        s = settings.APIJSON_TABLES
-        apijson_tables = dict(s.iteritems()) if s else {}
-        if apijson_tables:
-            for k in apijson_tables:
-                v = apijson_tables[k]
-                model_name = v.get("model_name") or k
-                tableui_name = v.get("tableui_name") or model_name
-                if not model_name:
-                    model_name = tableui_name
-                if model_name and tableui_name:
-                    request_tag = v.get("request_tag")
-                    role = v.get("role")
-                    yield(ApijsonTable(model_name=model_name, request_tag=request_tag, role=role, tableui_name=tableui_name, table_name=k))
-        else:
-            apison_table_ui = dict(
-                settings.APIJSON_TABLE_UI.iteritems())
-            for tableui_name in apison_table_ui:
-                tableui = apison_table_ui[tableui_name]
-                model_name = tableui.get("@model_name") or tableui_name
-                request_tag = model_name
-                role = None
-                yield(ApijsonTable(model_name=model_name, request_tag=request_tag, role=role, tableui_name=tableui_name))
+        apison_table_ui = dict(
+            settings.APIJSON_TABLE_UI.iteritems())
+        for tableui_name in apison_table_ui:
+            tableui = apison_table_ui[tableui_name]
+            model_name = tableui.get("@model_name") or tableui_name
+            request_tag = model_name
+            role = None
+            yield(ApijsonTable(model_name=model_name, request_tag=request_tag, role=role, tableui_name=tableui_name))
     return list(iter_table())
 
 

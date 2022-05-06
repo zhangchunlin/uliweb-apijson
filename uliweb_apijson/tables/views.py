@@ -12,7 +12,11 @@ class Tables(object):
         apijson_tables = functions.get_apijson_tables()
         def _get_model(i):
             model_name = i.model_name
-            return settings.APIJSON_MODELS.get(model_name,{})
+            model = settings.APIJSON_MODELS.get(model_name,{})
+            if not i.role:
+                roles = model.get("GET",{}).get("roles")
+                i.role = roles[0] if isinstance(roles, list) else roles
+            return model
         models = [_get_model(i) for i in apijson_tables]
         def _get_request(i):
             request_tag = i.request_tag or i.model_name

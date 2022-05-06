@@ -504,6 +504,12 @@ Vue.component('apijson-table', {
             }
             this.config_delete_set_deleted = this.table.tableui.delete_set_deleted || false
             this.config_deleted_field_name = this.table.tableui.deleted_field_name || "deleted"
+            if (this.table.tableui.sort_key!=null) {
+                this.sort_key = this.table.tableui.sort_key
+            }
+            if (this.table.tableui.sort_order!=null) {
+                this.sort_order = this.table.tableui.sort_order
+            }
         }
         //if not do this, the first notice will hide behind the navigation bar in uliweb apps
         this.$Notice.config({top: 100,duration: 8});
