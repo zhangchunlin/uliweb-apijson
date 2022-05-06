@@ -23,9 +23,13 @@
                 <pre>
 {table_json}
                 </pre>
-                <h3>example code</h3>
+                <h3>example backend code</h3>
                 <pre>
-table = functions.get_apijson_table("{table.model_name}", role="{table.role}", request_tag="{table.request_tag}", tableui_name="{table.tableui_name}")
+table = functions.get_apijson_table("{table.model_name}", role="{table.role}", tableui_name="{table.tableui_name}")
+                </pre>
+                <h3>example frontend code</h3>
+                <pre>
+&lt;apijson-table :table=&quot;table&quot;&gt;&lt;/apijson-table&gt;
                 </pre>
             </div>
             <div v-if="current_menu_item=='tableui_config'">
