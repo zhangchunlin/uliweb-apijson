@@ -25,7 +25,7 @@
                 </pre>
                 <h3>example backend code</h3>
                 <pre>
-table = functions.get_apijson_table("{table.model_name}", role="{table.role}", tableui_name="{table.tableui_name}")
+table = functions.get_apijson_table("{table.model_name}", role="{table.role}", request_tag="{table.request_tag}", tableui_name="{table.tableui_name}")
                 </pre>
                 <h3>example frontend code</h3>
                 <pre>
@@ -57,15 +57,13 @@ table = functions.get_apijson_table("{table.model_name}", role="{table.role}", t
             return {
                 current_menu_item: "table_param",
                 table_param: {},
-                tableui: {}
+                tableui: {},
+                tableui_json: ""
             }
         },
         computed: {
             table_json: function(){
                 return JSON.stringify(this.table_param, null, 2)
-            },
-            tableui_json: function(){
-                return JSON.stringify(this.tableui, null, 2)
             },
             model_json: function(){
                 return JSON.stringify(this.model, null, 2)
@@ -82,7 +80,15 @@ table = functions.get_apijson_table("{table.model_name}", role="{table.role}", t
         mounted: function(){
             this.table_param = JSON.parse(JSON.stringify(this.table))
             delete this.table_param.tableui
-            this.tableui = this.table.tableui
+            //remove __id field, look like vuejs add this
+            var tableui = JSON.parse(JSON.stringify(this.table.tableui))
+            if (tableui.table_fields!=null) {
+                for (let index = 0; index < tableui.table_fields.length; index++) {
+                    if (tableui.table_fields[index].__id!=null)
+                    delete tableui.table_fields[index].__id
+                }
+                this.tableui_json = JSON.stringify(tableui, null, 2)
+            }
         }
     })
 </script>
