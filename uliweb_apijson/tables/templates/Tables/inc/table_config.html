@@ -19,8 +19,13 @@
         </i-col>
         <i-col span="8">
             <div v-if="current_menu_item=='table_param'">
+                <h3>table parameter</h3>
                 <pre>
 {table_json}
+                </pre>
+                <h3>example code</h3>
+                <pre>
+table = functions.get_apijson_table("{table.model_name}", role="{table.role}", request_tag="{table.request_tag}", tableui_name="{table.tableui_name}")
                 </pre>
             </div>
             <div v-if="current_menu_item=='tableui_config'">
