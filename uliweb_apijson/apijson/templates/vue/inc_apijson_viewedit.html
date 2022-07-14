@@ -5,7 +5,9 @@ Vue.component('apijson-viewedit', {
         "table",
         "id",
         "hook_init",
-        "hook_ajax_params"
+        "hook_ajax_params",
+        "hook_ajax_post_result"
+
     ],
     template: `<div>
 <Spin size="large" fix v-if="loading"></Spin>
@@ -111,12 +113,19 @@ Vue.component('apijson-viewedit', {
                             title: 'success update #'+thisp.row.id+' in table '+thisp.table.model_name,
                             desc: data.msg
                         })
+                        if(thisp.hook_ajax_post_result){
+                            thisp.hook_ajax_post_result(true, params, thisp.row_saved)
+                        }
                     }
                     else {
                         thisp.$Notice.error({
                             title: 'error when update #'+thisp.row.id+' in table '+thisp.table.model_name,
                             desc: data.msg
                         })
+                        if(thisp.hook_ajax_post_result){
+                            thisp.hook_ajax_post_result(false, params, thisp.row_saved)
+                        }
+
                     }
                 }
             })
