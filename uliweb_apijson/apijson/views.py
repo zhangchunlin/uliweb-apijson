@@ -387,7 +387,7 @@ class ApiJson(object):
                 permission_check_ok = True
             else:
                 return json({"code":400,"msg":"user doesn't have role '%s'"%(params_role)})
-        else:
+        if not permission_check_ok:
             perms = HEAD.get("permissions")
             if perms:
                 if params_role:
