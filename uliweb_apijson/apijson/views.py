@@ -15,7 +15,7 @@ log = logging.getLogger('apijson')
 
 @expose('/apijson')
 class ApiJson(object):
-    def __begin__(self):
+    async def __begin__(self):
         self.rdict = {
             "code":200,
             "msg":"success"
@@ -25,9 +25,11 @@ class ApiJson(object):
         try:
             #https://blog.csdn.net/yockie/article/details/44065885
             #keep order when parse json, because the order matters for association query
-            self.request_data = loads(request.data, object_pairs_hook=OrderedDict)
+            # In Uliweb3 ASGI, use await request.body() to get raw data, then use loads with OrderedDict
+            data = await request.body()
+            self.request_data = loads(data, object_pairs_hook=OrderedDict)
         except Exception as e:
-            log.error("try to load json but get exception: '%s', request data: %s"%(e,request.data))
+            log.error("try to load json but get exception: '%s', request data: %s"%(e, data))
             return json({"code":400,"msg":"not json data in the request"})
 
     def _apply_vars(self):
@@ -164,7 +166,7 @@ class ApiJson(object):
             for i in ref_fields:
                 del params[i]
             params.update(refs)
-            
+
             for n in params:
                 if n[0]=="@":
                     if n=="@column":
@@ -405,7 +407,7 @@ class ApiJson(object):
         #current implementation won't run here, but keep for safe
         if not permission_check_ok:
             return json({"code":400,"msg":"no permission"})
-        
+
         if params_role=="OWNER":
             owner_filtered,q = self._filter_owner(model,model_setting,q)
             if not owner_filtered:
