@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/zhangchunlin/uliweb-apijson.svg?branch=master)](https://travis-ci.org/zhangchunlin/uliweb-apijson)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zhangchunlin/uliweb-apijson) [![Build Status](https://travis-ci.org/zhangchunlin/uliweb-apijson.svg?branch=master)](https://travis-ci.org/zhangchunlin/uliweb-apijson)
 
 uliweb-apijson is a subset and slightly different variation of [apijson](https://github.com/TommyLemon/APIJSON/blob/master/Document.md)
 
